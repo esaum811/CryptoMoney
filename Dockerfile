@@ -4,6 +4,8 @@ FROM python:3.10.7-slim-buster
 
 WORKDIR /python-docker
 
+RUN python3 -m pip install --upgrade pip setuptools wheel
+
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 

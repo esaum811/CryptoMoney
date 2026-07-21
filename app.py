@@ -38,7 +38,12 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 # Fetch a list of cryptocurrencies
-response=get_symbols()
+try:
+    response = get_symbols()
+except Exception as exc:
+    print(f"Could not load symbols from Bybit: {exc}")
+    response = []
+
 cryptos = [(crypto['name'], crypto['name']) for crypto in response]
 
 

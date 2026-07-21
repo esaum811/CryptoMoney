@@ -3,13 +3,16 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectMultipleField, SelectField
 from wtforms.validators import DataRequired, EqualTo, Email, Regexp, ValidationError
-import requests
 from models import User
 from wtforms import StringField, FloatField
-from bybit import *
-# fetch a list of cryptocurrencies
-response=get_symbols()
-cryptos = [(crypto['name'], crypto['name']) for crypto in response]
+from bybit import get_symbols
+
+try:
+    response = get_symbols()
+    cryptos = [(crypto['name'], crypto['name']) for crypto in response]
+except Exception as exc:
+    print(f"Could not load crypto symbols: {exc}")
+    cryptos = []
 
 class SignupForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
