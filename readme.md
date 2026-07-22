@@ -1,52 +1,232 @@
-# Cryptocurrency Portfolio Tracker
+# 🚀 Crypto Portfolio Tracker — Versión Refactorizada
 
-## Description
-Cryptocurrency Portfolio Tracker is a web application built with Flask that allows users to track their cryptocurrency holdings and set price alerts for specific cryptocurrencies. It also offers a real-time price update feature and sends price alert emails when the price of a tracked cryptocurrency crosses the defined limits.
+Sistema de rastreo de portafolio de criptomonedas en tiempo real, modernizado mediante reingeniería de software a partir de un proyecto monolítico legacy.
 
-## Features
-- User authentication and registration system.
-- Add, edit, and delete cryptocurrency holdings in your portfolio.
-- Set price alerts for specific cryptocurrencies.
-- Real-time price updates for tracked cryptocurrencies.
-- Email notifications for price alerts.
+---
 
-## Prerequisites
-- Docker installed on your system.
+## 📖 Descripción
 
-## Installation and Usage
+Aplicación web desarrollada con Flask que permite a los usuarios:
+- Consultar precios de criptomonedas en tiempo real (API de Bybit)
+- Visualizar gráficos de velas (candlestick) interactivos con Plotly.js
+- Gestionar una lista de seguimiento (Watchlist) personalizada
+- Configurar alertas de precio con notificaciones por email
+- Registrar transacciones de compra/venta para calcular ganancias y pérdidas (P&L)
+- Cambiar el idioma de la interfaz entre Inglés y Español
+- Alternar entre modo oscuro y modo claro
 
-1. Clone the repository to your local machine:
+---
 
-[git clone https://github.com/nithesh10/Crypto-Portfolio-Tracker.git]
+## 🏗️ Arquitectura Legada (Original)
 
-2. Navigate to the project directory:
+El proyecto original presentaba una estructura **monolítica** con todos los archivos en la raíz, sin separación de responsabilidades:
 
-   [cd cryptocurrency-portfolio-tracker]
-   
-3. Build the Docker image:
-   docker build -t cryptocurrency-portfolio .
-   
-4. Run the Docker container:
-   docker run -p 5000:5000 cryptocurrency-portfolio
+```
+Crypto-Portfolio-Tracker/  (ESTRUCTURA ORIGINAL)
+├── app.py              ← Inicialización, config, Celery, modelos, filtros, rutas (todo junto)
+├── routes.py           ← Rutas mezclando auth + dashboard + API + emails
+├── models.py           ← Modelos de datos
+├── forms.py            ← Formularios (importa bybit.py al inicio — carga API al importar)
+├── database.py         ← Instancia de SQLAlchemy
+├── bybit.py            ← Cliente API de Bybit
+├── templates/
+│   ├── base.html       ← Layout con ~580 líneas (HTML + CSS + JS inline)
+│   ├── index.html
+│   ├── login.html
+│   └── signup.html
+├── static/
+├── requirements.txt
+└── Dockerfile
+```
 
-5. Open your web browser and visit `http://localhost:5000` to access the application.
+### Problemas identificados:
 
-## Configuration
+| Problema | Detalle |
+|----------|---------|
+| **Importaciones circulares** | `app.py` importa `routes.py`, que importa `app` de `app.py` |
+| **Secretos hardcodeados** | `SECRET_KEY = 'Surya123'` y credenciales SMTP en texto plano |
+| **Variables globales** | `saved_symbol` y `sent_email = []` — no thread-safe, se pierden al reiniciar |
+| **Rutas sin protección** | Endpoints sensibles sin `@login_required` |
+| **Código muerto** | Modelo `Crypto`, `CryptoForm`, función `track_prices()` comentada, JS sin uso |
+| **Bug de emails** | `send_portfolio_email()` envía emails parciales dentro de un loop |
+| **Celery task vacía** | `check_price_alerts()` solo tiene `pass` |
+| **Bootstrap 4** | Versión desactualizada, dependiente de jQuery |
+| **Sin i18n** | Textos solo en inglés, sin soporte multilenguaje |
 
-- The application uses a SQLite database to store user and cryptocurrency data. You can change the database configuration in `app.py` if needed.
+---
 
-- Email notifications for price alerts require configuring a valid email service in the Flask app. Set the following environment variables with your email credentials:
+## ✅ Nueva Arquitectura (Refactorizada)
 
-export MAIL_SERVER=your-email-smtp-server
-export MAIL_PORT=your-email-smtp-port
-export MAIL_USERNAME=your-email-username
-export MAIL_PASSWORD=your-email-password
-export MAIL_DEFAULT_SENDER=your-email-address
+Se aplicó el patrón **Application Factory** con **Blueprints** de Flask, separando responsabilidades en módulos:
 
-## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+```
+Crypto-Portfolio-Tracker/  (NUEVA ESTRUCTURA)
+├── app/
+│   ├── __init__.py              ← Application Factory (create_app)
+│   ├── extensions.py            ← Instancias centralizadas (db, login, babel, migrate)
+│   ├── models.py                ← Modelos consolidados + AlertLog + Transaction
+│   ├── tasks.py                 ← Tareas de verificación de alertas (corregido)
+│   │
+│   ├── auth/                    ← Blueprint de Autenticación
+│   │   ├── __init__.py
+│   │   ├── routes.py            ← Login, Signup, Logout, Cambio de idioma
+│   │   └── forms.py             ← SignupForm, LoginForm
+│   │
+│   ├── main/                    ← Blueprint Principal
+│   │   ├── __init__.py
+│   │   ├── routes.py            ← Dashboard, Watchlist, Alertas, Portafolio, API
+│   │   └── forms.py             ← WatchlistForm, TransactionForm
+│   │
+│   ├── services/                ← Capa de servicios (lógica de negocio)
+│   │   ├── bybit_client.py      ← Cliente API Bybit optimizado
+│   │   └── email_service.py     ← Servicio de email centralizado
+│   │
+│   ├── static/
+│   │   ├── css/styles.css       ← Tema oscuro/claro con variables CSS
+│   │   └── js/                  ← chart.js, alerts.js, theme.js, language.js
+│   │
+│   ├── templates/
+│   │   ├── base.html            ← Layout Bootstrap 5 responsivo
+│   │   ├── auth/                ← Templates de autenticación
+│   │   ├── main/                ← Dashboard, Portafolio, Historial de alertas
+│   │   ├── components/          ← Toast, Modal de alertas
+│   │   └── email/               ← Plantilla de email
+│   │
+│   └── translations/            ← Archivos i18n (EN/ES)
+│       ├── en/LC_MESSAGES/
+│       └── es/LC_MESSAGES/
+│
+├── config.py                    ← Configuración desde variables de entorno
+├── run.py                       ← Punto de entrada
+├── babel.cfg                    ← Config de extracción de traducciones
+├── .env.example                 ← Plantilla de variables de entorno
+├── requirements.txt             ← Dependencias actualizadas
+├── Dockerfile                   ← Contenedorización
+└── README.md                    ← Este archivo
+```
 
-## Author
-- Nithesh Kumar A
-![image](https://github.com/nithesh10/Crypto-Portfolio-Tracker/assets/83530216/1425f7ab-8ccb-461b-b4db-07d793788d85)
+### Patrones de diseño aplicados:
 
+- **Application Factory**: La app se crea mediante `create_app()`, permitiendo configuraciones dinámicas y testing.
+- **Blueprints**: `auth` y `main` separan responsabilidades de autenticación y funcionalidad principal.
+- **Service Layer**: `bybit_client.py` y `email_service.py` encapsulan la lógica de integración externa.
+- **Configuración centralizada**: Todas las variables sensibles se cargan desde `.env` vía `config.py`.
+
+---
+
+## 🛠️ Tecnologías
+
+| Categoría | Tecnología |
+|-----------|-----------|
+| Backend | Python 3.11, Flask 3.0, SQLAlchemy 2.0 |
+| Autenticación | Flask-Login |
+| Migraciones | Flask-Migrate, Alembic |
+| Internacionalización | Flask-Babel 4.0 |
+| Frontend | Bootstrap 5.3, Plotly.js 2.27, CSS Variables |
+| Tareas en segundo plano | Celery 5.3, Redis |
+| Base de datos | SQLite |
+| Contenedorización | Docker |
+| API externa | Bybit v5 (spot) |
+
+---
+
+## 📦 Instalación
+
+### Requisitos previos
+- Python 3.11+
+- Redis (para Celery)
+- Docker (opcional)
+
+### Instalación local
+
+```bash
+# 1. Clonar repositorio
+git clone https://github.com/esaum811/CryptoMoney.git
+cd CryptoMoney
+
+# 2. Crear entorno virtual
+python -m venv venv
+venv\Scripts\activate      # Windows
+# source venv/bin/activate  # Linux/Mac
+
+# 3. Instalar dependencias
+pip install -r requirements.txt
+
+# 4. Configurar variables de entorno
+copy .env.example .env
+# Editar .env con tus valores
+
+# 5. Compilar traducciones
+pybabel compile -d app/translations
+
+# 6. Ejecutar la aplicación
+python run.py
+```
+
+### Instalación con Docker
+
+```bash
+docker build -t crypto-portfolio .
+docker run -p 5000:5000 crypto-portfolio
+```
+
+---
+
+## 🔐 Variables de Entorno
+
+| Variable | Descripción | Valor por defecto |
+|----------|-------------|-------------------|
+| `SECRET_KEY` | Clave secreta de Flask | (requerido) |
+| `DATABASE_URL` | URI de la base de datos | `sqlite:///crypto.db` |
+| `CELERY_BROKER_URL` | URL del broker de Celery | `redis://localhost:6379/0` |
+| `CELERY_RESULT_BACKEND` | Backend de resultados Celery | `redis://localhost:6379/0` |
+| `MAIL_SENDER` | Email remitente para alertas | (opcional) |
+| `MAIL_PASSWORD` | App password del email | (opcional) |
+| `FLASK_ENV` | Entorno de ejecución | `development` |
+
+---
+
+## 🌐 Endpoints de la API
+
+| Ruta | Método | Protegida | Descripción |
+|------|--------|-----------|-------------|
+| `/` | GET, POST | No | Inicio de sesión |
+| `/signup` | GET, POST | No | Registro de usuario |
+| `/logout` | GET | No | Cerrar sesión |
+| `/set_language/<lang>` | GET | No | Cambiar idioma (en/es) |
+| `/index` | GET, POST | Sí | Dashboard principal con gráfico |
+| `/dashboard` | GET | Sí | Redirige a /index |
+| `/candlestick_data` | GET | Sí | Datos OHLC en JSON |
+| `/symbol_info` | GET | Sí | Info del ticker en JSON |
+| `/add_price_alert` | POST | Sí | Crear alerta de precio |
+| `/check_alerts` | GET | Sí | Verificar alertas activas |
+| `/add_to_watchlist` | POST | Sí | Agregar a watchlist |
+| `/remove_from_watchlist/<name>` | POST | Sí | Eliminar de watchlist |
+| `/portfolio` | GET, POST | Sí | Portafolio de transacciones |
+| `/alert_history` | GET | Sí | Historial de alertas |
+| `/sign_up_for_portfolio_email` | POST | Sí | Preferencia de email |
+| `/check_portfolio_email` | GET | Sí | Estado de preferencia |
+| `/api/health` | GET | No | Estado del servidor |
+
+---
+
+## ✨ Características Nuevas
+
+| Característica | Descripción |
+|---------------|-------------|
+| 🌐 **Internacionalización** | Soporte bilingüe Inglés/Español con Flask-Babel |
+| 🌙 **Modo Oscuro/Claro** | Toggle de tema con persistencia en localStorage |
+| 📊 **Portafolio P&L** | Registro de transacciones con cálculo de ganancias/pérdidas |
+| 📋 **Historial de Alertas** | Log de alertas disparadas con fecha, precio y estado |
+| 🔔 **Notificaciones Toast** | Reemplaza los `alert()` nativos por toast elegantes |
+| 🪟 **Modal de Alertas** | Reemplaza `window.prompt()` por un modal Bootstrap |
+| 📈 **Alertas en Gráfico** | Líneas horizontales en el chart indicando límites configurados |
+| 🔍 **Búsqueda de Cryptos** | Input con filtro instantáneo para agregar criptomonedas |
+| 📱 **Responsive** | Sidebar colapsable en dispositivos móviles |
+| 🏥 **Health Check** | Endpoint `/api/health` para monitoreo del servidor |
+
+---
+
+## 👤 Autor
+
+Proyecto de reingeniería de software — Universidad

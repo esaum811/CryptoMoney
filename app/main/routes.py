@@ -1,0 +1,269 @@
+from flask import render_template, redirect, url_for, flash, session, request, jsonify
+from flask_login import current_user, login_required
+from flask_babel import _
+from datetime import datetime
+import pandas as pd
+from app.main import main_bp
+from app.main.forms import WatchlistForm, TransactionForm
+from app.models import Watchlist, PriceAlerts, AlertLog, Transaction, User
+from app.extensions import db
+from app.services.bybit_client import get_symbols, get_symbol_info, get_candlestick_data
+from app.services.email_service import send_alert_email, send_portfolio_summary
+
+
+def _load_crypto_choices():
+    """Load crypto choices once and cache in app context."""
+    try:
+        symbols = get_symbols()
+        return [(s['name'], s['name']) for s in symbols]
+    except Exception:
+        return [('BTCUSDT', 'BTCUSDT'), ('ETHUSDT', 'ETHUSDT')]
+
+
+# ── Dashboard / Chart ──────────────────────────────────────────────
+
+@main_bp.route('/index', methods=['GET', 'POST'])
+@login_required
+def index():
+    watchlist_form = WatchlistForm()
+    watchlist_form.crypto.choices = _load_crypto_choices()
+    watchlist = Watchlist.query.filter_by(user_id=current_user.id).all()
+
+    if watchlist_form.validate_on_submit():
+        crypto = Watchlist(
+            user_id=current_user.id,
+            crypto_name=watchlist_form.crypto.data,
+            lower_limit=watchlist_form.lower_limit.data,
+            upper_limit=watchlist_form.upper_limit.data
+        )
+        db.session.add(crypto)
+        db.session.commit()
+        flash(_('Added to watchlist!'), 'success')
+        return redirect(url_for('main.index'))
+
+    selected = request.args.get('crypto', 'BTCUSDT')
+    timeline = request.args.get('timeline', '5')
+    data = get_candlestick_data(selected, timeline, 100)
+    data['times'] = pd.to_datetime(data['times'])
+    data['times'] = data['times'].dt.strftime('%Y-%m-%d %H:%M:%S')
+
+    # Store in session instead of global variable
+    session['saved_symbol'] = selected
+
+    # Get active alerts for chart overlay
+    alerts = PriceAlerts.query.filter_by(
+        user_id=current_user.id, is_triggered=False
+    ).all()
+    alert_data = [{'symbol': a.symbol, 'lower': a.lower_limit, 'upper': a.upper_limit} for a in alerts]
+
+    return render_template(
+        'main/index.html',
+        watchlist_form=watchlist_form,
+        watchlist=watchlist,
+        candlestick_data=data.to_dict(orient='records'),
+        alert_data=alert_data,
+        selected_crypto=selected
+    )
+
+
+@main_bp.route('/dashboard')
+@login_required
+def dashboard():
+    watchlist = Watchlist.query.filter_by(user_id=current_user.id).all()
+    return redirect(url_for('main.index'))
+
+
+# ── API Endpoints ──────────────────────────────────────────────────
+
+@main_bp.route('/candlestick_data')
+@login_required
+def candlestick_data():
+    selected = request.args.get('crypto', 'BTCUSDT')
+    if selected == 'None':
+        selected = session.get('saved_symbol', 'BTCUSDT')
+    timeline = request.args.get('timeline', '5')
+    data = get_candlestick_data(selected, timeline, 100)
+    data['times'] = pd.to_datetime(data['times'])
+    data['times'] = data['times'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    session['saved_symbol'] = selected
+    return jsonify(data.to_dict(orient='records'))
+
+
+@main_bp.route('/symbol_info')
+@login_required
+def symbol_info():
+    symbol = request.args.get('symbol', 'BTCUSDT')
+    info = get_symbol_info(symbol)
+    return jsonify(info)
+
+
+# ── Price Alerts ───────────────────────────────────────────────────
+
+@main_bp.route('/add_price_alert', methods=['POST'])
+@login_required
+def add_price_alert():
+    data = request.get_json()
+    if not data:
+        return jsonify({'message': _('Invalid request')}), 400
+    symbol = data.get('crypto_name', 'BTCUSDT')
+    try:
+        lower = float(data.get('lower_limit', 0))
+        upper = float(data.get('upper_limit', 0))
+    except (TypeError, ValueError):
+        return jsonify({'message': _('Invalid limit values')}), 400
+    alert = PriceAlerts(
+        user_id=current_user.id, symbol=symbol,
+        lower_limit=lower, upper_limit=upper
+    )
+    db.session.add(alert)
+    db.session.commit()
+    return jsonify({'message': _('Price alert added successfully.')}), 200
+
+
+@main_bp.route('/check_alerts')
+@login_required
+def check_alerts():
+    triggered = []
+    alerts = PriceAlerts.query.filter_by(
+        user_id=current_user.id, is_triggered=False
+    ).all()
+    for alert in alerts:
+        info = get_symbol_info(alert.symbol)
+        if not info:
+            continue
+        last_price = float(info[0].get('lastPrice', 0))
+        if last_price >= alert.upper_limit or last_price <= alert.lower_limit:
+            change = float(info[0].get('price24hPcnt', 0))
+            alert_type = 'UPPER' if last_price >= alert.upper_limit else 'LOWER'
+            # Log to DB
+            log = AlertLog(
+                user_id=alert.user_id, symbol=alert.symbol,
+                alert_type=alert_type, trigger_price=last_price,
+                limit_value=alert.upper_limit if alert_type == 'UPPER' else alert.lower_limit,
+                email_sent=True
+            )
+            db.session.add(log)
+            alert.is_triggered = True
+            db.session.commit()
+            send_alert_email(current_user.email, alert.symbol, last_price, change)
+            triggered.append(alert.symbol)
+    return jsonify({'triggered_alerts': triggered})
+
+
+# ── Alert History ──────────────────────────────────────────────────
+
+@main_bp.route('/alert_history')
+@login_required
+def alert_history():
+    logs = AlertLog.query.filter_by(user_id=current_user.id)\
+        .order_by(AlertLog.triggered_at.desc()).all()
+    return render_template('main/alert_history.html', logs=logs)
+
+
+# ── Watchlist ──────────────────────────────────────────────────────
+
+@main_bp.route('/add_to_watchlist', methods=['POST'])
+@login_required
+def add_to_watchlist():
+    form = WatchlistForm()
+    form.crypto.choices = _load_crypto_choices()
+    if form.validate_on_submit():
+        crypto = Watchlist(user_id=current_user.id, crypto_name=form.crypto.data)
+        db.session.add(crypto)
+        db.session.commit()
+        flash(_('Crypto added to watchlist!'), 'success')
+    return redirect(url_for('main.index'))
+
+
+@main_bp.route('/remove_from_watchlist/<crypto_name>', methods=['POST'])
+@login_required
+def remove_from_watchlist(crypto_name):
+    crypto = Watchlist.query.filter_by(
+        user_id=current_user.id, crypto_name=crypto_name
+    ).first()
+    if crypto:
+        db.session.delete(crypto)
+        db.session.commit()
+    return jsonify({'message': _('Removed successfully')}), 200
+
+
+# ── Portfolio (Transactions P&L) ───────────────────────────────────
+
+@main_bp.route('/portfolio', methods=['GET', 'POST'])
+@login_required
+def portfolio():
+    form = TransactionForm()
+    form.symbol.choices = _load_crypto_choices()
+    if form.validate_on_submit():
+        tx = Transaction(
+            user_id=current_user.id,
+            symbol=form.symbol.data,
+            type=form.type.data,
+            quantity=form.quantity.data,
+            price_at_transaction=form.price.data
+        )
+        db.session.add(tx)
+        db.session.commit()
+        flash(_('Transaction recorded!'), 'success')
+        return redirect(url_for('main.portfolio'))
+
+    transactions = Transaction.query.filter_by(user_id=current_user.id)\
+        .order_by(Transaction.timestamp.desc()).all()
+
+    # Calculate portfolio summary
+    holdings = {}
+    for tx in transactions:
+        if tx.symbol not in holdings:
+            holdings[tx.symbol] = {'qty': 0, 'cost': 0}
+        if tx.type == 'BUY':
+            holdings[tx.symbol]['qty'] += tx.quantity
+            holdings[tx.symbol]['cost'] += tx.quantity * tx.price_at_transaction
+        else:
+            holdings[tx.symbol]['qty'] -= tx.quantity
+            holdings[tx.symbol]['cost'] -= tx.quantity * tx.price_at_transaction
+
+    portfolio_data = []
+    total_value = 0
+    total_cost = 0
+    for symbol, data in holdings.items():
+        if data['qty'] <= 0:
+            continue
+        info = get_symbol_info(symbol)
+        current_price = float(info[0]['lastPrice']) if info else 0
+        value = data['qty'] * current_price
+        cost = data['cost']
+        pnl = value - cost
+        pnl_pct = (pnl / cost * 100) if cost > 0 else 0
+        portfolio_data.append({
+            'symbol': symbol, 'qty': data['qty'],
+            'avg_price': cost / data['qty'] if data['qty'] > 0 else 0,
+            'current_price': current_price, 'value': value,
+            'pnl': pnl, 'pnl_pct': pnl_pct
+        })
+        total_value += value
+        total_cost += cost
+
+    return render_template(
+        'main/portfolio.html', form=form, transactions=transactions,
+        portfolio_data=portfolio_data, total_value=total_value,
+        total_cost=total_cost, total_pnl=total_value - total_cost
+    )
+
+
+# ── Email Preferences ─────────────────────────────────────────────
+
+@main_bp.route('/sign_up_for_portfolio_email', methods=['POST'])
+@login_required
+def toggle_email():
+    data = request.get_json()
+    current_user.receive_portfolio_email = data.get('sign_up', False)
+    db.session.commit()
+    if current_user.receive_portfolio_email:
+        send_portfolio_summary(current_user)
+    return jsonify({'message': _('Email preference updated')}), 200
+
+
+@main_bp.route('/check_portfolio_email')
+@login_required
+def check_email_pref():
+    return jsonify({'value': current_user.receive_portfolio_email})

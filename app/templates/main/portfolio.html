@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0">{{ _('Portfolio') }}</h3>
+    <button class="btn btn-primary rounded-pill shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#transactionFormCollapse">
+        <i class="bi bi-plus-lg me-2"></i>{{ _('Add Transaction') }}
+    </button>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="card glass-card border-0 rounded-4 shadow-sm h-100 hover-lift">
+            <div class="card-body p-4">
+                <h6 class="text-muted text-uppercase fw-semibold mb-2">{{ _('Total Value') }}</h6>
+                <h2 class="fw-bold text-primary mb-0">${{ "{:,.2f}".format(total_value|default(0)) }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card glass-card border-0 rounded-4 shadow-sm h-100 hover-lift">
+            <div class="card-body p-4">
+                <h6 class="text-muted text-uppercase fw-semibold mb-2">{{ _('Total Cost') }}</h6>
+                <h2 class="fw-bold text-primary mb-0">${{ "{:,.2f}".format(total_cost|default(0)) }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card glass-card border-0 rounded-4 shadow-sm h-100 hover-lift">
+            <div class="card-body p-4">
+                <h6 class="text-muted text-uppercase fw-semibold mb-2">{{ _('Total P&L') }}</h6>
+                {% set pnl = total_pnl|default(0) %}
+                <h2 class="fw-bold mb-0 {{ 'price-up' if pnl >= 0 else 'price-down' }}">
+                    {{ '+' if pnl >= 0 else '' }}${{ "{:,.2f}".format(pnl) }}
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Form (Collapsible) -->
+<div class="collapse mb-4" id="transactionFormCollapse">
+    <div class="card glass-card border-0 rounded-4 shadow-sm">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-4">{{ _('Record Transaction') }}</h5>
+            <form method="POST" action="{{ url_for('main.portfolio') }}" class="row g-3">
+                {{ form.hidden_tag() if form else '' }}
+                <!-- Form fields would be dynamically generated or hardcoded here -->
+                <div class="col-md-3">
+                    <label class="form-label text-muted">{{ _('Symbol') }}</label>
+                    <input type="text" name="symbol" class="form-control bg-secondary-custom border-secondary text-primary" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted">{{ _('Type') }}</label>
+                    <select name="type" class="form-select bg-secondary-custom border-secondary text-primary" required>
+                        <option value="BUY">{{ _('Buy') }}</option>
+                        <option value="SELL">{{ _('Sell') }}</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted">{{ _('Quantity') }}</label>
+                    <input type="number" step="0.000001" name="quantity" class="form-control bg-secondary-custom border-secondary text-primary" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted">{{ _('Price') }}</label>
+                    <input type="number" step="0.01" name="price" class="form-control bg-secondary-custom border-secondary text-primary" required>
+                </div>
+                <div class="col-12 text-end mt-4">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">{{ _('Save Transaction') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Holdings Table -->
+<div class="card glass-card border-0 rounded-4 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-bottom border-secondary p-4">
+        <h5 class="fw-bold mb-0">{{ _('Current Holdings') }}</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-borderless text-primary mb-0 align-middle">
+                <thead class="bg-secondary-custom text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4 py-3">{{ _('Symbol') }}</th>
+                        <th class="py-3">{{ _('Qty') }}</th>
+                        <th class="py-3">{{ _('Avg Price') }}</th>
+                        <th class="py-3">{{ _('Current Price') }}</th>
+                        <th class="py-3">{{ _('Value') }}</th>
+                        <th class="py-3">{{ _('P&L') }}</th>
+                        <th class="pe-4 py-3 text-end">{{ _('P&L %') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if portfolio_data %}
+                        {% for item in portfolio_data %}
+                        <tr class="border-bottom border-secondary">
+                            <td class="ps-4 py-3 fw-bold">{{ item.symbol }}</td>
+                            <td class="py-3">{{ item.qty }}</td>
+                            <td class="py-3">${{ "{:,.2f}".format(item.avg_price) }}</td>
+                            <td class="py-3">${{ "{:,.2f}".format(item.current_price) }}</td>
+                            <td class="py-3 fw-semibold">${{ "{:,.2f}".format(item.value) }}</td>
+                            <td class="py-3 {{ 'price-up' if item.pnl >= 0 else 'price-down' }} fw-medium">
+                                {{ '+' if item.pnl >= 0 else '' }}${{ "{:,.2f}".format(item.pnl) }}
+                            </td>
+                            <td class="pe-4 py-3 text-end {{ 'price-up' if item.pnl_pct >= 0 else 'price-down' }} fw-bold">
+                                {{ '+' if item.pnl_pct >= 0 else '' }}{{ "{:.2f}".format(item.pnl_pct) }}%
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">{{ _('No holdings available. Add a transaction.') }}</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0">{{ _('Dashboard') }}</h3>
+    
+    <!-- Timeline Selector -->
+    <div class="btn-group shadow-sm bg-secondary-custom rounded-pill p-1" role="group" id="timelineSelector">
+        <input type="radio" class="btn-check" name="timeline" id="t-5m" value="5m" onchange="handleTimelineChange(this.value)">
+        <label class="btn btn-outline-primary btn-sm rounded-pill border-0" for="t-5m">5m</label>
+
+        <input type="radio" class="btn-check" name="timeline" id="t-15m" value="15m" onchange="handleTimelineChange(this.value)" checked>
+        <label class="btn btn-outline-primary btn-sm rounded-pill border-0" for="t-15m">15m</label>
+
+        <input type="radio" class="btn-check" name="timeline" id="t-1h" value="1h" onchange="handleTimelineChange(this.value)">
+        <label class="btn btn-outline-primary btn-sm rounded-pill border-0" for="t-1h">1H</label>
+
+        <input type="radio" class="btn-check" name="timeline" id="t-4h" value="4h" onchange="handleTimelineChange(this.value)">
+        <label class="btn btn-outline-primary btn-sm rounded-pill border-0" for="t-4h">4H</label>
+        
+        <input type="radio" class="btn-check" name="timeline" id="t-1d" value="1d" onchange="handleTimelineChange(this.value)">
+        <label class="btn btn-outline-primary btn-sm rounded-pill border-0" for="t-1d">1D</label>
+    </div>
+</div>
+
+<div class="card glass-card border-0 rounded-4 shadow-sm h-100">
+    <div class="card-body p-0 position-relative" style="min-height: 600px;">
+        <div id="chartLoading" class="position-absolute top-50 start-50 translate-middle d-flex flex-column align-items-center">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">{{ _('Loading...') }}</span>
+            </div>
+            <p class="text-muted mt-3 fw-medium">{{ _('Loading chart data...') }}</p>
+        </div>
+        <div id="mainChart" class="w-100 h-100" style="min-height: 600px;"></div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const defaultCrypto = "{{ selected_crypto if selected_crypto else 'BTC' }}";
+        if (defaultCrypto) {
+            updateChartWithCrypto(defaultCrypto, '15m');
+            updateSymbolInfo(defaultCrypto);
+            
+            // Start polling
+            setInterval(() => updateSymbolInfo(defaultCrypto), 15000);
+            setInterval(() => checkForAlerts(), 60000);
+        }
+    });
+</script>
+{% endblock %}

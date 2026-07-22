@@ -1,0 +1,48 @@
+<!-- Alert Modal -->
+<div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card border-0 shadow-lg">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title fw-bold text-primary" id="alertModalLabel">
+                    <i class="bi bi-bell-fill text-warning me-2"></i>{{ _('Set Price Alert') }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="alertSymbol">
+                
+                <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-secondary-custom rounded-3 border border-secondary">
+                    <div>
+                        <span class="text-muted d-block small">{{ _('Asset') }}</span>
+                        <span class="fw-bold fs-5 text-primary" id="alertSymbolDisplay">BTC</span>
+                    </div>
+                    <div class="text-end">
+                        <span class="text-muted d-block small">{{ _('Current Price') }}</span>
+                        <span class="fw-bold fs-5 text-primary" id="alertCurrentPrice">$--</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-muted">{{ _('Alert Condition') }}</label>
+                    <select class="form-select bg-secondary-custom border-secondary text-primary" id="alertType">
+                        <option value="UPPER">{{ _('Price rises above') }}</option>
+                        <option value="LOWER">{{ _('Price falls below') }}</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-muted">{{ _('Target Price (USD)') }}</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-secondary-custom border-secondary text-muted">$</span>
+                        <input type="number" class="form-control bg-secondary-custom border-secondary text-primary" id="alertPrice" step="0.01" placeholder="0.00">
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary rounded-pill fw-semibold" onclick="submitAlert()">{{ _('Create Alert') }}</button>
+                    <button type="button" class="btn btn-outline-secondary rounded-pill fw-semibold" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

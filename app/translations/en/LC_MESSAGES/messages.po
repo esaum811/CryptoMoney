@@ -1,0 +1,192 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-21 16:00+0000\n"
+"PO-Revision-Date: 2026-07-21 16:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: en\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Username"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Repeat Password"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "Register"
+msgstr ""
+
+msgid "Log In"
+msgstr ""
+
+msgid "Logout"
+msgstr ""
+
+msgid "Invalid username or password"
+msgstr ""
+
+msgid "Username already taken."
+msgstr ""
+
+msgid "Email already registered. Please login."
+msgstr ""
+
+msgid "Account created successfully! Please login."
+msgstr ""
+
+msgid "Watchlist"
+msgstr ""
+
+msgid "Cryptocurrency"
+msgstr ""
+
+msgid "Lower Price Limit"
+msgstr ""
+
+msgid "Upper Price Limit"
+msgstr ""
+
+msgid "Add"
+msgstr ""
+
+msgid "Added to watchlist!"
+msgstr ""
+
+msgid "Removed successfully"
+msgstr ""
+
+msgid "Crypto added to watchlist!"
+msgstr ""
+
+msgid "Price alert added successfully."
+msgstr ""
+
+msgid "Invalid request"
+msgstr ""
+
+msgid "Invalid limit values"
+msgstr ""
+
+msgid "Transaction recorded!"
+msgstr ""
+
+msgid "Email preference updated"
+msgstr ""
+
+msgid "Passwords must match."
+msgstr ""
+
+msgid "Password: min 8 chars, uppercase, lowercase, digit, special char."
+msgstr ""
+
+msgid "Please use a different username."
+msgstr ""
+
+msgid "Dashboard"
+msgstr ""
+
+msgid "Portfolio"
+msgstr ""
+
+msgid "Alert History"
+msgstr ""
+
+msgid "Select Timeline"
+msgstr ""
+
+msgid "High Price (24h)"
+msgstr ""
+
+msgid "Low Price (24h)"
+msgstr ""
+
+msgid "Price Change (24h)"
+msgstr ""
+
+msgid "Search cryptocurrency..."
+msgstr ""
+
+msgid "Daily Portfolio email updates"
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "Quantity"
+msgstr ""
+
+msgid "Price per unit"
+msgstr ""
+
+msgid "Add Transaction"
+msgstr ""
+
+msgid "Symbol"
+msgstr ""
+
+msgid "Trigger Price"
+msgstr ""
+
+msgid "Limit Value"
+msgstr ""
+
+msgid "Date"
+msgstr ""
+
+msgid "Email Sent"
+msgstr ""
+
+msgid "Total Value"
+msgstr ""
+
+msgid "Total Cost"
+msgstr ""
+
+msgid "Total P&L"
+msgstr ""
+
+msgid "Current Price"
+msgstr ""
+
+msgid "Avg Price"
+msgstr ""
+
+msgid "Value"
+msgstr ""
+
+msgid "Holdings"
+msgstr ""
+
+msgid "Transaction History"
+msgstr ""
+
+msgid "Add Price Alert"
+msgstr ""
+
+msgid "Lower Limit"
+msgstr ""
+
+msgid "Upper Limit"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Create Alert"
+msgstr ""
+
+msgid "Dark Mode"
+msgstr ""
+
+msgid "Light Mode"
+msgstr ""
