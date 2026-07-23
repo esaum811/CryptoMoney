@@ -227,6 +227,31 @@ docker run -p 5000:5000 crypto-portfolio
 
 ---
 
+## 🛠️ Correcciones y Ajustes de la Fase 1
+
+Durante las pruebas de integración de la Fase 1 se identificaron y solucionaron los siguientes errores:
+
+1. **Migración de Base de Datos SQLite**:
+   - Adición de la columna `is_triggered` a la tabla `price_alerts`.
+   - Creación de las tablas `alert_log` (historial) y `transaction` (portafolio P&L).
+
+2. **Corrección en Formulario de Registro (Signup)**:
+   - Inclusión del campo `password2` (Repetir Contraseña) y visualización de alertas con mensajes de validación.
+
+3. **Carga y Renderizado del Gráfico Plotly**:
+   - Conversión automática de intervalos de tiempo (`15m` → `15`, `1h` → `60`, `1d` → `D`) compatibles con la API v5 de Bybit.
+   - Formateo del endpoint `/symbol_info` y mapeo numérico flotante para velas OHLC.
+   - Ocultamiento correcto del loader mediante clases nativas `d-none` y `d-flex` de Bootstrap.
+
+4. **Módulo de Portafolio y Registro de Compras/Ventas**:
+   - Solución a la falla de Jinja2 por el símbolo `%` en traducciones `gettext`.
+   - Soporte para procesamiento directo de solicitudes `POST` al guardar transacciones.
+
+5. **Sincronización de Rutas JavaScript**:
+   - Actualización de los endpoints consumidos por `alerts.js` (`/check_portfolio_email`, `/sign_up_for_portfolio_email` y `/remove_from_watchlist/<name>`).
+
+---
+
 ## 👤 Autor
 
 Proyecto de reingeniería de software — Universidad

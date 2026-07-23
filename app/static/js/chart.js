@@ -18,7 +18,11 @@ async function updateChartWithCrypto(cryptoName, timeline = null) {
     currentCrypto = cryptoName;
     if (timeline) currentTimeline = timeline;
     
-    document.getElementById('chartLoading').style.display = 'flex';
+    const loader = document.getElementById('chartLoading');
+    if (loader) {
+        loader.classList.remove('d-none');
+        loader.classList.add('d-flex');
+    }
     document.getElementById('mainChart').style.opacity = '0.3';
 
     try {
@@ -33,7 +37,10 @@ async function updateChartWithCrypto(cryptoName, timeline = null) {
         console.error('Error fetching chart data:', error);
         showToast('Error', 'Failed to load chart data', 'danger');
     } finally {
-        document.getElementById('chartLoading').style.display = 'none';
+        if (loader) {
+            loader.classList.remove('d-flex');
+            loader.classList.add('d-none');
+        }
         document.getElementById('mainChart').style.opacity = '1';
     }
 }
@@ -41,11 +48,11 @@ async function updateChartWithCrypto(cryptoName, timeline = null) {
 function drawChart(data, title) {
     const colors = getChartColors();
     const trace = {
-        x: data.map(d => d.time),
-        close: data.map(d => d.close),
-        high: data.map(d => d.high),
-        low: data.map(d => d.low),
-        open: data.map(d => d.open),
+        x: data.map(d => d.times),
+        close: data.map(d => parseFloat(d.close)),
+        high: data.map(d => parseFloat(d.high)),
+        low: data.map(d => parseFloat(d.low)),
+        open: data.map(d => parseFloat(d.open)),
         increasing: {line: {color: colors.up}},
         decreasing: {line: {color: colors.down}},
         type: 'candlestick',

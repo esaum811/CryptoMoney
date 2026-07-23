@@ -78,10 +78,10 @@ def dashboard():
 @main_bp.route('/candlestick_data')
 @login_required
 def candlestick_data():
-    selected = request.args.get('crypto', 'BTCUSDT')
+    selected = request.args.get('symbol') or request.args.get('crypto') or session.get('saved_symbol', 'BTCUSDT')
     if selected == 'None':
         selected = session.get('saved_symbol', 'BTCUSDT')
-    timeline = request.args.get('timeline', '5')
+    timeline = request.args.get('timeline', '15m')
     data = get_candlestick_data(selected, timeline, 100)
     data['times'] = pd.to_datetime(data['times'])
     data['times'] = data['times'].dt.strftime('%Y-%m-%d %H:%M:%S')
@@ -94,7 +94,17 @@ def candlestick_data():
 def symbol_info():
     symbol = request.args.get('symbol', 'BTCUSDT')
     info = get_symbol_info(symbol)
-    return jsonify(info)
+    if info and len(info) > 0:
+        raw = info[0]
+        return jsonify({
+            'symbol': raw.get('symbol', symbol),
+            'current_price': raw.get('lastPrice', '0'),
+            'change_24h': str(float(raw.get('price24hPcnt', 0)) * 100),
+            'high_24h': raw.get('highPrice24h', '0'),
+            'low_24h': raw.get('lowPrice24h', '0'),
+            'volume_24h': raw.get('volume24h', '0'),
+        })
+    return jsonify({'symbol': symbol, 'current_price': '0', 'change_24h': '0', 'high_24h': '0', 'low_24h': '0'})
 
 
 # ── Price Alerts ───────────────────────────────────────────────────
@@ -165,13 +175,16 @@ def alert_history():
 @main_bp.route('/add_to_watchlist', methods=['POST'])
 @login_required
 def add_to_watchlist():
-    form = WatchlistForm()
-    form.crypto.choices = _load_crypto_choices()
-    if form.validate_on_submit():
-        crypto = Watchlist(user_id=current_user.id, crypto_name=form.crypto.data)
-        db.session.add(crypto)
-        db.session.commit()
-        flash(_('Crypto added to watchlist!'), 'success')
+    crypto_name = request.form.get('crypto') or request.form.get('crypto_name')
+    if crypto_name:
+        existing = Watchlist.query.filter_by(user_id=current_user.id, crypto_name=crypto_name).first()
+        if not existing:
+            crypto = Watchlist(user_id=current_user.id, crypto_name=crypto_name)
+            db.session.add(crypto)
+            db.session.commit()
+            flash(_('Crypto added to watchlist!'), 'success')
+        else:
+            flash(_('Already in watchlist'), 'warning')
     return redirect(url_for('main.index'))
 
 
@@ -193,19 +206,33 @@ def remove_from_watchlist(crypto_name):
 @login_required
 def portfolio():
     form = TransactionForm()
-    form.symbol.choices = _load_crypto_choices()
-    if form.validate_on_submit():
-        tx = Transaction(
-            user_id=current_user.id,
-            symbol=form.symbol.data,
-            type=form.type.data,
-            quantity=form.quantity.data,
-            price_at_transaction=form.price.data
-        )
-        db.session.add(tx)
-        db.session.commit()
-        flash(_('Transaction recorded!'), 'success')
-        return redirect(url_for('main.portfolio'))
+    crypto_choices = _load_crypto_choices()
+    form.symbol.choices = crypto_choices
+
+    if request.method == 'POST':
+        symbol = request.form.get('symbol')
+        tx_type = request.form.get('type', 'BUY')
+        try:
+            quantity = float(request.form.get('quantity', 0))
+            price = float(request.form.get('price', 0))
+        except (ValueError, TypeError):
+            quantity = 0
+            price = 0
+
+        if symbol and quantity > 0 and price >= 0:
+            tx = Transaction(
+                user_id=current_user.id,
+                symbol=symbol.strip().upper(),
+                type=tx_type,
+                quantity=quantity,
+                price_at_transaction=price
+            )
+            db.session.add(tx)
+            db.session.commit()
+            flash(_('Transaction recorded!'), 'success')
+            return redirect(url_for('main.portfolio'))
+        else:
+            flash(_('Invalid transaction values. Please check symbol, quantity and price.'), 'danger')
 
     transactions = Transaction.query.filter_by(user_id=current_user.id)\
         .order_by(Transaction.timestamp.desc()).all()

@@ -49,7 +49,18 @@
                 <!-- Form fields would be dynamically generated or hardcoded here -->
                 <div class="col-md-3">
                     <label class="form-label text-muted">{{ _('Symbol') }}</label>
-                    <input type="text" name="symbol" class="form-control bg-secondary-custom border-secondary text-primary" required>
+                    <select name="symbol" class="form-select bg-secondary-custom border-secondary text-primary" required>
+                        <option value="" disabled selected>{{ _('Select Crypto') }}</option>
+                        {% if form and form.symbol.choices %}
+                            {% for value, label in form.symbol.choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        {% else %}
+                            <option value="BTCUSDT">BTCUSDT</option>
+                            <option value="ETHUSDT">ETHUSDT</option>
+                            <option value="SOLUSDT">SOLUSDT</option>
+                        {% endif %}
+                    </select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label text-muted">{{ _('Type') }}</label>
@@ -90,7 +101,7 @@
                         <th class="py-3">{{ _('Current Price') }}</th>
                         <th class="py-3">{{ _('Value') }}</th>
                         <th class="py-3">{{ _('P&L') }}</th>
-                        <th class="pe-4 py-3 text-end">{{ _('P&L %') }}</th>
+                        <th class="pe-4 py-3 text-end">{{ _('P&L') }} %</th>
                     </tr>
                 </thead>
                 <tbody>

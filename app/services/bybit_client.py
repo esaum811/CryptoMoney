@@ -47,9 +47,17 @@ def get_symbol_info(symbol):
 def get_candlestick_data(symbol, interval, limit):
     """Fetch OHLC candlestick data and return as DataFrame."""
     url = 'https://api.bybit.com/v5/market/kline'
+    
+    interval_map = {
+        '1m': '1', '5m': '5', '15m': '15', '30m': '30',
+        '1h': '60', '4h': '240', '12h': '720', '1d': 'D', 'd': 'D',
+        '1w': 'W', 'w': 'W', '1m': 'M', 'm': 'M'
+    }
+    bybit_interval = interval_map.get(str(interval).lower(), str(interval))
+
     params = {
         'symbol': symbol,
-        'interval': interval,
+        'interval': bybit_interval,
         'category': 'spot',
         'limit': limit,
     }

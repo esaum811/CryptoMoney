@@ -99,17 +99,30 @@
                     </h6>
                     
                     {% if watchlist_form %}
-                    <form id="watchlist-form" class="mb-3 d-flex gap-2">
-                        <!-- Hidden inputs can be added here if needed for CSRF -->
-                        <select class="form-select form-select-sm" id="crypto-select" name="crypto_name" required>
-                            <option value="" disabled selected>{{ _('Select Crypto') }}</option>
-                            <option value="BTC">Bitcoin (BTC)</option>
-                            <option value="ETH">Ethereum (ETH)</option>
-                            <option value="SOL">Solana (SOL)</option>
-                            <!-- More options dynamically if needed -->
-                        </select>
-                        <button type="button" class="btn btn-primary btn-sm" onclick="addToWatchlist()"><i class="bi bi-plus-lg"></i></button>
-                    </form>
+                    <div class="mb-3">
+                        <input type="text" class="form-control form-control-sm mb-2 bg-secondary-custom border-secondary text-primary" 
+                               id="crypto-search" placeholder="{{ _('Search cryptocurrency...') }}" 
+                               oninput="filterCryptoSelect()">
+                        <div class="d-flex gap-2">
+                            <select class="form-select form-select-sm bg-secondary-custom border-secondary text-primary" id="crypto-select" name="crypto">
+                                <option value="" disabled selected>{{ _('Select Crypto') }}</option>
+                                {% for value, label in watchlist_form.crypto.choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="addToWatchlist()"><i class="bi bi-plus-lg"></i></button>
+                        </div>
+                    </div>
+                    <script>
+                    function filterCryptoSelect() {
+                        const filter = document.getElementById('crypto-search').value.toUpperCase();
+                        const select = document.getElementById('crypto-select');
+                        for (let i = 1; i < select.options.length; i++) {
+                            const txt = select.options[i].text.toUpperCase();
+                            select.options[i].style.display = txt.includes(filter) ? '' : 'none';
+                        }
+                    }
+                    </script>
                     {% endif %}
 
                     <ul class="list-group list-group-flush watchlist-list" id="watchlist">

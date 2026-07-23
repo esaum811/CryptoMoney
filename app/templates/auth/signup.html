@@ -14,6 +14,15 @@
             <div class="card-body px-5 pb-5 pt-3">
                 <form method="POST" action="{{ url_for('auth.signup') }}">
                     {{ form.hidden_tag() if form else '' }}
+
+                    {% for field in form.errors %}
+                        {% for error in form.errors[field] %}
+                        <div class="alert alert-danger alert-dismissible fade show py-2" role="alert">
+                            {{ error }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endfor %}
                     
                     <div class="mb-4 form-floating">
                         <input type="text" class="form-control bg-secondary-custom border-secondary text-primary" id="username" name="username" placeholder="{{ _('Username') }}" required>
@@ -30,7 +39,12 @@
                         <label for="password" class="text-muted">{{ _('Password') }}</label>
                     </div>
 
-                    <div class="d-grid gap-2 mt-5">
+                    <div class="mb-4 form-floating">
+                        <input type="password" class="form-control bg-secondary-custom border-secondary text-primary" id="password2" name="password2" placeholder="{{ _('Repeat Password') }}" required>
+                        <label for="password2" class="text-muted">{{ _('Repeat Password') }}</label>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
                         <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-semibold">{{ _('Sign Up') }}</button>
                     </div>
                 </form>

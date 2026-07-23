@@ -1,5 +1,6 @@
 function showToast(title, message, type = 'info') {
     const toastEl = document.getElementById('liveToast');
+    if (!toastEl) return;
     const toastBody = document.getElementById('toastBody');
     const toastTitle = document.getElementById('toastTitle');
     const toastIcon = document.getElementById('toastIcon');
@@ -26,7 +27,6 @@ function openAlertModal(cryptoName) {
     document.getElementById('alertSymbol').value = cryptoName;
     document.getElementById('alertSymbolDisplay').innerText = cryptoName;
     
-    // Fetch current price
     fetch(`/symbol_info?symbol=${cryptoName}`)
         .then(res => res.json())
         .then(data => {
@@ -43,25 +43,39 @@ function openAlertModal(cryptoName) {
 function submitAlert() {
     const symbol = document.getElementById('alertSymbol').value;
     const alertType = document.getElementById('alertType').value;
-    const targetPrice = document.getElementById('alertPrice').value;
+    const targetPrice = parseFloat(document.getElementById('alertPrice').value);
 
-    const formData = new FormData();
-    formData.append('symbol', symbol);
-    formData.append('alert_type', alertType);
-    formData.append('target_price', targetPrice);
+    if (!targetPrice || targetPrice <= 0) {
+        showToast('Error', 'Please enter a valid price', 'danger');
+        return;
+    }
+
+    // Map the modal's single-price design to the backend's lower/upper limit model
+    let lower = 0;
+    let upper = 999999999;
+    if (alertType === 'UPPER') {
+        upper = targetPrice;
+    } else {
+        lower = targetPrice;
+    }
 
     fetch('/add_price_alert', {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            crypto_name: symbol,
+            lower_limit: lower,
+            upper_limit: upper
+        })
     })
     .then(res => res.json())
     .then(data => {
-        if (data.success) {
-            showToast('Success', 'Alert created successfully', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('alertModal')).hide();
-        } else {
-            showToast('Error', data.message || 'Failed to create alert', 'danger');
-        }
+        showToast('Success', data.message || 'Alert created', 'success');
+        const modalEl = document.getElementById('alertModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+        // Clear the input
+        document.getElementById('alertPrice').value = '';
     })
     .catch(err => {
         console.error(err);
@@ -74,9 +88,9 @@ async function checkForAlerts() {
         const response = await fetch('/check_alerts');
         if (response.ok) {
             const data = await response.json();
-            if (data.triggered && data.triggered.length > 0) {
-                data.triggered.forEach(alert => {
-                    showToast('Alert Triggered!', `${alert.symbol} crossed ${alert.alert_type} limit of $${alert.limit_value}`, 'warning');
+            if (data.triggered_alerts && data.triggered_alerts.length > 0) {
+                data.triggered_alerts.forEach(symbol => {
+                    showToast('Alert Triggered!', `${symbol} crossed a price limit!`, 'warning');
                 });
             }
         }
@@ -85,52 +99,74 @@ async function checkForAlerts() {
     }
 }
 
-function removeFromWatchlist(symbol) {
-    if (confirm(`Remove ${symbol} from watchlist?`)) {
-        fetch(`/remove_from_watchlist`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `crypto_name=${symbol}`
+function removeFromWatchlist(cryptoName) {
+    if (confirm(`Remove ${cryptoName} from watchlist?`)) {
+        fetch(`/remove_from_watchlist/${cryptoName}`, {
+            method: 'POST'
         })
         .then(res => res.json())
         .then(data => {
-            if (data.success) {
-                document.getElementById(`watchlist-item-${symbol}`).remove();
-                showToast('Removed', `${symbol} removed from watchlist`, 'success');
-            }
-        });
+            const item = document.getElementById(`watchlist-item-${cryptoName}`);
+            if (item) item.remove();
+            showToast('Removed', data.message || `${cryptoName} removed`, 'success');
+        })
+        .catch(err => console.error(err));
     }
 }
 
 function addToWatchlist() {
-    const symbol = document.getElementById('crypto-select').value;
-    if (!symbol) return;
+    const select = document.getElementById('crypto-select');
+    const symbol = select.value;
+    if (!symbol) {
+        showToast('Info', 'Please select a cryptocurrency', 'warning');
+        return;
+    }
     
-    // Fallback logic assuming standard form submission or fetch if endpoint provided
-    showToast('Info', 'Add to watchlist functionality requires endpoint setup', 'info');
+    const formData = new FormData();
+    formData.append('crypto', symbol);
+    
+    fetch('/add_to_watchlist', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => {
+        if (res.redirected) {
+            window.location.reload();
+            return;
+        }
+        return res.text();
+    })
+    .then(() => {
+        window.location.reload();
+    })
+    .catch(err => console.error(err));
 }
 
 function togglePortfolioEmail() {
     const isChecked = document.getElementById('portfolioEmailToggle').checked;
-    fetch('/toggle_email', {
+    fetch('/sign_up_for_portfolio_email', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `enabled=${isChecked}`
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sign_up: isChecked })
     })
     .then(res => res.json())
     .then(data => {
-        showToast('Preferences Updated', data.message || `Email alerts ${isChecked ? 'enabled' : 'disabled'}`, 'success');
-    });
+        showToast('Preferences', data.message || 'Updated', 'success');
+    })
+    .catch(err => console.error(err));
 }
 
 function getUserEmailPreference() {
-    fetch('/check_email_pref')
-    .then(res => res.json())
+    fetch('/check_portfolio_email')
+    .then(res => {
+        if (!res.ok) return;
+        return res.json();
+    })
     .then(data => {
-        if (data.enabled !== undefined) {
-            document.getElementById('portfolioEmailToggle').checked = data.enabled;
+        if (data && data.value !== undefined) {
+            const toggle = document.getElementById('portfolioEmailToggle');
+            if (toggle) toggle.checked = data.value;
         }
-    });
+    })
+    .catch(err => console.error(err));
 }
