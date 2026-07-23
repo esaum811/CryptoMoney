@@ -1,3 +1,5 @@
+"""Rutas y controladores del Blueprint de autenticación (Login, Signup, Logout, Idioma)."""
+
 from flask import render_template, redirect, url_for, flash, session, request
 from flask_login import login_user, logout_user, current_user
 from flask_babel import _
@@ -9,6 +11,7 @@ from app.extensions import db
 
 @auth_bp.route('/', methods=['GET', 'POST'])
 def login():
+    """Ruta para autenticar usuarios existentes."""
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     form = LoginForm()
@@ -24,6 +27,7 @@ def login():
 
 @auth_bp.route('/signup', methods=['GET', 'POST'])
 def signup():
+    """Ruta para registrar nuevos usuarios en el sistema."""
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     form = SignupForm()
@@ -45,12 +49,15 @@ def signup():
 
 @auth_bp.route('/logout')
 def logout():
+    """Cierra la sesión del usuario actual."""
     logout_user()
     return redirect(url_for('auth.login'))
 
 
 @auth_bp.route('/set_language/<lang>')
 def set_language(lang):
+    """Cambia la preferencia de idioma del usuario (en / es)."""
     if lang in ['en', 'es']:
         session['lang'] = lang
     return redirect(request.referrer or url_for('auth.login'))
+

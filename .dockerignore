@@ -1,0 +1,40 @@
+# Git y VCS
+.git
+.gitignore
+.gitattributes
+
+# Entornos virtuales de Python
+.venv
+venv/
+env/
+ENV/
+
+# Archivos de caché e intermedios de Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Archivos de configuración local y secretos
+.env
+.env.*
+!.env.example
+
+# Archivos de base de datos local e instancias
+*.db
+*.sqlite
+*.sqlite3
+crypto.db
+instance/
+
+# Celery y logs local
+celerybeat-schedule*
+*.log
+
+# IDEs y Editores de código
+.vscode/
+.idea/
+*.swp
+*.swo

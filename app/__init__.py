@@ -1,3 +1,5 @@
+"""Fábrica de aplicaciones Flask (Application Factory Pattern)."""
+
 from flask import Flask, jsonify, session, request
 from sqlalchemy import text
 from datetime import datetime
@@ -6,47 +8,49 @@ from app.extensions import db, login_manager, migrate, babel
 
 
 def create_app(config_class=Config):
+    """Inicializa y configura la instancia de la aplicación Flask."""
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # Initialize extensions
+    # Inicialización de extensiones compartidas
     db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
     babel.init_app(app, locale_selector=get_locale)
 
-    # Import models so they are registered with SQLAlchemy
+    # Importar modelos para su registro en SQLAlchemy
     from app import models  # noqa: F401
-
-    # Register user loader
     from app.models import User
 
+    # Cargador de usuarios para Flask-Login
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Register Blueprints
+    # Registro de Blueprints de la aplicación
     from app.auth import auth_bp
     from app.main import main_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
 
-    # Template filters
+    # Filtros personalizados de Jinja2 para plantillas HTML
     @app.template_filter('truncate_email')
     def truncate_email(email, max_length=20):
+        """Trunca emails largos en la interfaz gráfica."""
         if len(email) <= max_length:
             return email
         half = max_length // 2
         return email[:half] + '****' + email[-half:]
 
-    # Context processor for locale in templates
+    # Inyección de locale en el contexto de plantillas HTML
     @app.context_processor
     def inject_locale():
         return {'get_locale': get_locale}
 
-    # Health check endpoint (Phase 6 requirement)
+    # Endpoint de estado del servicio (/api/health)
     @app.route('/api/health')
     def health_check():
+        """Verifica la salud del servidor y la conexión a la base de datos."""
         health = {
             'status': 'ok',
             'timestamp': datetime.utcnow().isoformat(),
@@ -61,7 +65,7 @@ def create_app(config_class=Config):
         code = 200 if health['status'] == 'ok' else 503
         return jsonify(health), code
 
-    # Create tables
+    # Creación inicial de tablas de la base de datos si no existen
     with app.app_context():
         db.create_all()
 
@@ -69,5 +73,6 @@ def create_app(config_class=Config):
 
 
 def get_locale():
-    from flask import session, request
+    """Determina el idioma preferido del usuario (inglés o español)."""
     return session.get('lang', request.accept_languages.best_match(['en', 'es'], default='en'))
+

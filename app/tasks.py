@@ -1,3 +1,5 @@
+"""Tareas en segundo plano y procesamiento asíncrono de alertas."""
+
 from app.extensions import db
 from app.models import PriceAlerts, AlertLog, User
 from app.services.bybit_client import get_symbol_info
@@ -5,10 +7,7 @@ from app.services.email_service import send_alert_email
 
 
 def check_price_alerts(app):
-    """Periodic task: checks all active price alerts and triggers emails.
-    Replaces the broken Celery task that had 'pass' and the global sent_email list.
-    Can be called by Celery or APScheduler.
-    """
+    """Tarea periódica: evalúa alertas de precio activas y envía correos cuando se superan los límites."""
     with app.app_context():
         alerts = PriceAlerts.query.filter_by(is_triggered=False).all()
         for alert in alerts:
@@ -31,6 +30,7 @@ def check_price_alerts(app):
                 alert_type = 'LOWER'
 
             if triggered:
+                # Almacenar el registro histórico de la alerta disparada
                 log = AlertLog(
                     user_id=alert.user_id,
                     symbol=alert.symbol,
@@ -42,8 +42,10 @@ def check_price_alerts(app):
                 alert.is_triggered = True
                 user = User.query.get(alert.user_id)
                 if user:
+                    # Notificar al usuario por email
                     success = send_alert_email(user.email, alert.symbol, last_price, price_change)
                     log.email_sent = success
                 db.session.add(log)
                 db.session.commit()
-                print(f"Alert triggered for {alert.symbol} at {last_price}")
+                print(f"Alerta disparada para {alert.symbol} en {last_price}")
+

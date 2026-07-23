@@ -1,3 +1,5 @@
+"""Rutas y controladores del Blueprint principal (Dashboard, Velas, Alertas, Watchlist, Portafolio P&L)."""
+
 from flask import render_template, redirect, url_for, flash, session, request, jsonify
 from flask_login import current_user, login_required
 from flask_babel import _
@@ -12,7 +14,7 @@ from app.services.email_service import send_alert_email, send_portfolio_summary
 
 
 def _load_crypto_choices():
-    """Load crypto choices once and cache in app context."""
+    """Carga y procesa la lista de pares de criptomonedas disponibles desde Bybit."""
     try:
         symbols = get_symbols()
         return [(s['name'], s['name']) for s in symbols]
@@ -25,6 +27,7 @@ def _load_crypto_choices():
 @main_bp.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
+    """Ruta principal: muestra el gráfico candlestick interactivo y la watchlist."""
     watchlist_form = WatchlistForm()
     watchlist_form.crypto.choices = _load_crypto_choices()
     watchlist = Watchlist.query.filter_by(user_id=current_user.id).all()
@@ -47,10 +50,9 @@ def index():
     data['times'] = pd.to_datetime(data['times'])
     data['times'] = data['times'].dt.strftime('%Y-%m-%d %H:%M:%S')
 
-    # Store in session instead of global variable
     session['saved_symbol'] = selected
 
-    # Get active alerts for chart overlay
+    # Alertas activas para superposición en el gráfico
     alerts = PriceAlerts.query.filter_by(
         user_id=current_user.id, is_triggered=False
     ).all()
@@ -69,6 +71,7 @@ def index():
 @main_bp.route('/dashboard')
 @login_required
 def dashboard():
+    """Redirección de compatibilidad hacia la vista principal."""
     watchlist = Watchlist.query.filter_by(user_id=current_user.id).all()
     return redirect(url_for('main.index'))
 
@@ -78,6 +81,7 @@ def dashboard():
 @main_bp.route('/candlestick_data')
 @login_required
 def candlestick_data():
+    """Endpoint JSON: Devuelve los datos OHLC para renderizar velas en Plotly.js."""
     selected = request.args.get('symbol') or request.args.get('crypto') or session.get('saved_symbol', 'BTCUSDT')
     if selected == 'None':
         selected = session.get('saved_symbol', 'BTCUSDT')
@@ -92,6 +96,7 @@ def candlestick_data():
 @main_bp.route('/symbol_info')
 @login_required
 def symbol_info():
+    """Endpoint JSON: Devuelve la información del ticker en tiempo real (precio, cambio 24h, etc.)."""
     symbol = request.args.get('symbol', 'BTCUSDT')
     info = get_symbol_info(symbol)
     if info and len(info) > 0:
@@ -112,6 +117,7 @@ def symbol_info():
 @main_bp.route('/add_price_alert', methods=['POST'])
 @login_required
 def add_price_alert():
+    """Crea una nueva alerta de precio (límite superior e inferior)."""
     data = request.get_json()
     if not data:
         return jsonify({'message': _('Invalid request')}), 400
@@ -133,6 +139,7 @@ def add_price_alert():
 @main_bp.route('/check_alerts')
 @login_required
 def check_alerts():
+    """Verifica si alguna alerta activa ha sido alcanzada por el precio de mercado."""
     triggered = []
     alerts = PriceAlerts.query.filter_by(
         user_id=current_user.id, is_triggered=False
@@ -145,7 +152,7 @@ def check_alerts():
         if last_price >= alert.upper_limit or last_price <= alert.lower_limit:
             change = float(info[0].get('price24hPcnt', 0))
             alert_type = 'UPPER' if last_price >= alert.upper_limit else 'LOWER'
-            # Log to DB
+            # Registrar evento en la BD
             log = AlertLog(
                 user_id=alert.user_id, symbol=alert.symbol,
                 alert_type=alert_type, trigger_price=last_price,
@@ -165,6 +172,7 @@ def check_alerts():
 @main_bp.route('/alert_history')
 @login_required
 def alert_history():
+    """Muestra el historial de alertas disparadas para el usuario autenticado."""
     logs = AlertLog.query.filter_by(user_id=current_user.id)\
         .order_by(AlertLog.triggered_at.desc()).all()
     return render_template('main/alert_history.html', logs=logs)
@@ -175,6 +183,7 @@ def alert_history():
 @main_bp.route('/add_to_watchlist', methods=['POST'])
 @login_required
 def add_to_watchlist():
+    """Agrega una criptomoneda a la lista de seguimiento del usuario."""
     crypto_name = request.form.get('crypto') or request.form.get('crypto_name')
     if crypto_name:
         existing = Watchlist.query.filter_by(user_id=current_user.id, crypto_name=crypto_name).first()
@@ -191,6 +200,7 @@ def add_to_watchlist():
 @main_bp.route('/remove_from_watchlist/<crypto_name>', methods=['POST'])
 @login_required
 def remove_from_watchlist(crypto_name):
+    """Elimina una criptomoneda de la lista de seguimiento del usuario."""
     crypto = Watchlist.query.filter_by(
         user_id=current_user.id, crypto_name=crypto_name
     ).first()
@@ -205,6 +215,7 @@ def remove_from_watchlist(crypto_name):
 @main_bp.route('/portfolio', methods=['GET', 'POST'])
 @login_required
 def portfolio():
+    """Gestión del portafolio P&L: registro de compras/ventas y cálculo de pérdidas/ganancias."""
     form = TransactionForm()
     crypto_choices = _load_crypto_choices()
     form.symbol.choices = crypto_choices
@@ -237,7 +248,7 @@ def portfolio():
     transactions = Transaction.query.filter_by(user_id=current_user.id)\
         .order_by(Transaction.timestamp.desc()).all()
 
-    # Calculate portfolio summary
+    # Cálculo consolidado del portafolio
     holdings = {}
     for tx in transactions:
         if tx.symbol not in holdings:
@@ -282,6 +293,7 @@ def portfolio():
 @main_bp.route('/sign_up_for_portfolio_email', methods=['POST'])
 @login_required
 def toggle_email():
+    """Activa o desactiva la recepción de reportes por correo electrónico."""
     data = request.get_json()
     current_user.receive_portfolio_email = data.get('sign_up', False)
     db.session.commit()
@@ -293,4 +305,6 @@ def toggle_email():
 @main_bp.route('/check_portfolio_email')
 @login_required
 def check_email_pref():
+    """Consulta el estado de la preferencia de email del usuario."""
     return jsonify({'value': current_user.receive_portfolio_email})
+

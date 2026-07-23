@@ -1,0 +1,17 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crypto-app
+    ports:
+      - "5000:5000"
+    volumes:
+      # Montaje de volumen local para "Hot Reload" (sincronización de código en tiempo real)
+      - .:/app
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - PYTHONUNBUFFERED=1
+    # Se añade la bandera --reload a Gunicorn para reiniciar los procesos al detectar cambios en archivos Python
+    command: gunicorn --reload --bind 0.0.0.0:5000 run:app

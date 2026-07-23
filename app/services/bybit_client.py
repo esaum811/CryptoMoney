@@ -1,9 +1,11 @@
+"""Cliente para la API v5 de Bybit (datos de mercado y gráficos candlestick)."""
+
 import requests
 import pandas as pd
 
 
 def safe_request(url, params=None, headers=None, timeout=15):
-    """Wrapper for HTTP GET requests with error handling."""
+    """Encapsula solicitudes HTTP GET hacia Bybit con manejo de errores y timeouts."""
     try:
         response = requests.get(url, params=params, headers=headers, timeout=timeout)
         response.raise_for_status()
@@ -14,7 +16,7 @@ def safe_request(url, params=None, headers=None, timeout=15):
 
 
 def get_symbols():
-    """Fetch all spot trading pairs from Bybit v5 API."""
+    """Obtiene la lista de pares de mercado Spot disponibles en Bybit."""
     url = 'https://api.bybit.com/v5/market/symbols'
     params = {'category': 'spot'}
     data = safe_request(url, params=params)
@@ -23,6 +25,7 @@ def get_symbols():
         if isinstance(result, dict):
             return result.get('list', []) or []
         return data.get('list', []) or []
+    # Fallback si falla la API
     return [
         {'name': 'BTCUSDT'},
         {'name': 'ETHUSDT'},
@@ -33,7 +36,7 @@ def get_symbols():
 
 
 def get_symbol_info(symbol):
-    """Get real-time ticker info for a specific symbol."""
+    """Obtiene la información y precio actual en tiempo real de un símbolo específico."""
     url = 'https://api.bybit.com/v5/market/tickers'
     params = {'symbol': symbol, 'category': 'spot'}
     data = safe_request(url, params=params)
@@ -45,9 +48,10 @@ def get_symbol_info(symbol):
 
 
 def get_candlestick_data(symbol, interval, limit):
-    """Fetch OHLC candlestick data and return as DataFrame."""
+    """Obtiene datos de kline/candlestick (OHLC) de Bybit y devuelve un DataFrame procesado."""
     url = 'https://api.bybit.com/v5/market/kline'
-    
+
+    # Mapeo de intervalos amigables al formato exigido por Bybit v5
     interval_map = {
         '1m': '1', '5m': '5', '15m': '15', '30m': '30',
         '1h': '60', '4h': '240', '12h': '720', '1d': 'D', 'd': 'D',
@@ -71,6 +75,8 @@ def get_candlestick_data(symbol, interval, limit):
     df = pd.DataFrame(result)
     if 'list' not in df.columns:
         return empty
+
+    # Transformación de timestamps y columnas OHLC
     df['times'] = pd.to_datetime(df['list'].apply(lambda x: int(x[0]) / 1000), unit='s')
     df['open'] = df['list'].apply(lambda x: x[1])
     df['high'] = df['list'].apply(lambda x: x[2])
@@ -79,3 +85,4 @@ def get_candlestick_data(symbol, interval, limit):
     df = df.drop(['category', 'symbol', 'list'], axis=1, errors='ignore')
     df = df.sort_values(by='times')
     return df
+
