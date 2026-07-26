@@ -116,11 +116,24 @@ function removeFromWatchlist(cryptoName) {
 
 function addToWatchlist() {
     const select = document.getElementById('crypto-select');
-    const symbol = select.value;
+    const searchInput = document.getElementById('crypto-search');
+    let symbol = select ? select.value : '';
+
+    if (!symbol && select && select.options.length > 1) {
+        for (let i = 0; i < select.options.length; i++) {
+            if (!select.options[i].disabled && select.options[i].value) {
+                symbol = select.options[i].value;
+                select.selectedIndex = i;
+                break;
+            }
+        }
+    }
+
     if (!symbol) {
         showToast('Info', 'Please select a cryptocurrency', 'warning');
         return;
     }
+
     
     const formData = new FormData();
     formData.append('crypto', symbol);

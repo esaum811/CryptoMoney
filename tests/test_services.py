@@ -116,7 +116,7 @@ def test_check_price_alerts_task(mock_send_email, mock_get_info, app, db, test_u
 
         check_price_alerts(app)
 
-        updated_alert = PriceAlerts.query.get(alert.id)
+        updated_alert = db.session.get(PriceAlerts, alert.id)
         assert updated_alert.is_triggered is True
 
         log = AlertLog.query.filter_by(user_id=test_user.id).first()

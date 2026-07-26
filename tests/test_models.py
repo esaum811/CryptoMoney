@@ -86,7 +86,7 @@ def test_price_alert_model(db, test_user):
     db.session.add(log)
     db.session.commit()
 
-    updated_alert = PriceAlerts.query.get(alert.id)
+    updated_alert = db.session.get(PriceAlerts, alert.id)
     assert updated_alert.is_triggered is True
     saved_log = AlertLog.query.filter_by(user_id=test_user.id).first()
     assert saved_log.trigger_price == 3600.0

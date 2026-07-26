@@ -66,7 +66,7 @@ def test_toggle_email_preferences(mock_summary, auth_client, db, test_user):
     response = auth_client.post('/sign_up_for_portfolio_email', json={'sign_up': True})
     assert response.status_code == 200
 
-    updated_user = User.query.get(test_user.id)
+    updated_user = db.session.get(User, test_user.id)
     assert updated_user.receive_portfolio_email is True
 
 

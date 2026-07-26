@@ -114,14 +114,90 @@
                         </div>
                     </div>
                     <script>
-                    function filterCryptoSelect() {
-                        const filter = document.getElementById('crypto-search').value.toUpperCase();
-                        const select = document.getElementById('crypto-select');
-                        for (let i = 1; i < select.options.length; i++) {
-                            const txt = select.options[i].text.toUpperCase();
-                            select.options[i].style.display = txt.includes(filter) ? '' : 'none';
+                    (function() {
+                        let rawOptions = [];
+
+                        function getOriginalOptions() {
+                            const select = document.getElementById('crypto-select');
+                            if (!select) return [];
+                            if (rawOptions.length === 0) {
+                                for (let i = 0; i < select.options.length; i++) {
+                                    rawOptions.push({
+                                        value: select.options[i].value,
+                                        text: select.options[i].text,
+                                        disabled: select.options[i].disabled
+                                    });
+                                }
+                            }
+                            return rawOptions;
                         }
-                    }
+
+                        window.filterCryptoSelect = function() {
+                            const searchInput = document.getElementById('crypto-search');
+                            const select = document.getElementById('crypto-select');
+                            if (!select || !searchInput) return;
+
+                            const options = getOriginalOptions();
+                            const filter = searchInput.value.trim().toUpperCase();
+
+                            select.innerHTML = '';
+
+                            if (!filter) {
+                                options.forEach((opt, idx) => {
+                                    const el = document.createElement('option');
+                                    el.value = opt.value;
+                                    el.textContent = opt.text;
+                                    if (opt.disabled) el.disabled = true;
+                                    if (idx === 0) el.selected = true;
+                                    select.appendChild(el);
+                                });
+                                select.selectedIndex = 0;
+                                return;
+                            }
+
+                            const defaultOpt = document.createElement('option');
+                            defaultOpt.value = '';
+                            defaultOpt.disabled = true;
+                            defaultOpt.textContent = options[0] ? options[0].text : 'Select Crypto';
+                            select.appendChild(defaultOpt);
+
+                            const matches = options.slice(1).filter(opt =>
+                                opt.text.toUpperCase().includes(filter) || opt.value.toUpperCase().includes(filter)
+                            );
+
+                            if (matches.length > 0) {
+                                matches.forEach((opt, idx) => {
+                                    const el = document.createElement('option');
+                                    el.value = opt.value;
+                                    el.textContent = opt.text;
+                                    if (idx === 0) el.selected = true;
+                                    select.appendChild(el);
+                                });
+                            } else {
+                                const noMatchOpt = document.createElement('option');
+                                noMatchOpt.value = '';
+                                noMatchOpt.disabled = true;
+                                noMatchOpt.selected = true;
+                                noMatchOpt.textContent = '{{ _("No matches found") }}';
+                                select.appendChild(noMatchOpt);
+                            }
+                        };
+
+                        document.addEventListener('DOMContentLoaded', function() {
+                            getOriginalOptions();
+                            const searchInput = document.getElementById('crypto-search');
+                            if (searchInput) {
+                                searchInput.addEventListener('keydown', function(e) {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        if (typeof addToWatchlist === 'function') {
+                                            addToWatchlist();
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    })();
                     </script>
                     {% endif %}
 

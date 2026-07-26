@@ -40,7 +40,7 @@ def check_price_alerts(app):
                     email_sent=False
                 )
                 alert.is_triggered = True
-                user = User.query.get(alert.user_id)
+                user = db.session.get(User, alert.user_id)
                 if user:
                     # Notificar al usuario por email
                     success = send_alert_email(user.email, alert.symbol, last_price, price_change)

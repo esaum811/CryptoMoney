@@ -47,6 +47,8 @@ async function updateChartWithCrypto(cryptoName, timeline = null) {
 
 function drawChart(data, title) {
     const colors = getChartColors();
+    const isEs = document.cookie.includes('lang=es') || (document.documentElement.lang === 'es');
+    
     const trace = {
         x: data.map(d => d.times),
         close: data.map(d => parseFloat(d.close)),
@@ -59,6 +61,17 @@ function drawChart(data, title) {
         xaxis: 'x',
         yaxis: 'y'
     };
+
+    if (isEs) {
+        trace.hovertext = data.map(d => 
+            `apertura: ${parseFloat(d.open).toFixed(2)}<br>` +
+            `máximo: ${parseFloat(d.high).toFixed(2)}<br>` +
+            `mínimo: ${parseFloat(d.low).toFixed(2)}<br>` +
+            `cierre: ${parseFloat(d.close).toFixed(2)}`
+        );
+        trace.hoverinfo = 'x+text';
+    }
+
 
     const layout = {
         title: {
