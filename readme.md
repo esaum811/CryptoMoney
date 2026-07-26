@@ -252,6 +252,21 @@ Durante las pruebas de integración de la Fase 1 se identificaron y solucionaron
 
 ---
 
+## 🚀 Pipeline de Integración Continua (CI/CD - Fase 5)
+
+[![CI Pipeline](https://github.com/nithesh10/Crypto-Portfolio-Tracker/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
+
+El proyecto cuenta con una canalización automatizada en **GitHub Actions** (`.github/workflows/ci.yml`) que ejecuta 4 trabajos automatizados:
+- **Linting & Syntax Check** (`flake8`)
+- **Pruebas Unitarias y de Integración con Cobertura (81%)** (`pytest`)
+- **Pruebas E2E en Chrome Headless** (`selenium`)
+- **Verificación de Construcción Docker** (`docker build`)
+
+Para mayor información sobre la arquitectura de CI, consulte [documentacion_fase_5.md](file:///c:/Users/esaum/OneDrive/Documentos/Mi-Primer-Docker/ProyectoExamen/Crypto-Portfolio-Tracker/documentacion_fase_5.md).
+
+---
+
 ## 👤 Autor
 
 Proyecto de reingeniería de software — Universidad
+
