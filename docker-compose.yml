@@ -14,4 +14,4 @@ services:
       - FLASK_DEBUG=1
       - PYTHONUNBUFFERED=1
     # Se añade la bandera --reload a Gunicorn para reiniciar los procesos al detectar cambios en archivos Python
-    command: gunicorn --reload --bind 0.0.0.0:5000 run:app
+    command: sh -c "gunicorn --reload --bind 0.0.0.0:${PORT:-5000} app:app"
