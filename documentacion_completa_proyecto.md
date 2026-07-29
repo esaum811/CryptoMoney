@@ -10,6 +10,8 @@
 * **Fecha de Emisión**: Julio 2026
 * **Autores / Responsables**: Equipo de Desarrollo, Reingeniería y Aseguramiento de Calidad (QA)
 * **Repositorio de Origen**: [nithesh10/Crypto-Portfolio-Tracker](https://github.com/nithesh10/Crypto-Portfolio-Tracker)
+* **Despliegue en Producción (Railway)**: [cryptomoney-production.up.railway.app](https://cryptomoney-production.up.railway.app)
+* **Endpoint de Salud (Health Check)**: [cryptomoney-production.up.railway.app/api/health](https://cryptomoney-production.up.railway.app/api/health)
 * **Ubicación del Proyecto**: `ProyectoExamen/Crypto-Portfolio-Tracker`
 
 ---
@@ -509,3 +511,45 @@ Se desarrollaron 4 pruebas End-to-End en [tests/test_selenium_e2e.py](file:///c:
   ```bash
   flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
   ```
+
+---
+
+## 13. 🛠️ Registro de Auditoría, Correcciones Recientes y Reingeniería de API e i18n
+
+### 13.1 Auditoría Profunda e Incongruencias Identificadas y Resueltas
+
+Durante la fase final de revisión del proyecto, se realizó una **auditoría profunda del código fuente, arquitectura y experiencia de usuario**, identificando y solucionando las siguientes incongruencias y malas prácticas:
+
+#### 1. 🌐 Reingeniería del Cliente API de Mercado y Resiliencia (`bybit_client.py`)
+* **Problema Identificado**: La aplicación intentaba consultar el endpoint `/v5/market/symbols` en la API v5 de Bybit, el cual no existe en la especificación oficial y retornaba respuestas HTTP `404 Not Found`. Además, peticiones automáticas desde IPs de servidores en la nube eran bloqueadas con `403 Forbidden` por reglas del WAF de Bybit.
+* **Solución Implementada**:
+  - Corrección del endpoint oficial de instrumentos Spot: `https://api.bybit.com/v5/market/instruments-info?category=spot`.
+  - Inyección de cabeceras de navegación reales (`User-Agent` de Google Chrome reciente, `Accept`, `Accept-Language`) en `safe_request()`.
+  - Implementación de un **sistema de redundancia y fallback multinivel**:
+    1. **Bybit v5 API** (Primaria).
+    2. **Binance Global API** (`/api/v3/ticker/24hr` y `/klines`).
+    3. **Binance US API** (Para servidores host en territorio norteamericano).
+    4. **Coinbase Public API** (Fallback de respaldo para precio spot y estadísticas).
+    5. **Lista de Seguridad Estática** en caso de desconexión total a Internet.
+
+#### 2. 🌍 Corrección Completa de Localización e Internacionalización (i18n)
+* **Problema Identificado**: Al cambiar la preferencia de idioma a español, algunas secciones y elementos de la interfaz continuaban mostrándose en inglés (encabezados de tablas como `DATE / TIME`, `LIMIT VALUE`, labels como `Daily Portfolio Email`, modales JavaScript de alertas y tooltips de hover en gráficos Plotly).
+* **Solución Implementada**:
+  - Complementación del diccionario `SPANISH_TRANSLATIONS` en `app/__init__.py` y del archivo de catálogos [messages.po](file:///c:/Users/esaum/OneDrive/Documentos/Mi-Primer-Docker/ProyectoExamen/Crypto-Portfolio-Tracker/app/translations/es/LC_MESSAGES/messages.po).
+  - Compilación binaria del catálogo de traducciones en `messages.mo`.
+  - Actualización de scripts de cliente ([alerts.js](file:///c:/Users/esaum/OneDrive/Documentos/Mi-Primer-Docker/ProyectoExamen/Crypto-Portfolio-Tracker/app/static/js/alerts.js) y [chart.js](file:///c:/Users/esaum/OneDrive/Documentos/Mi-Primer-Docker/ProyectoExamen/Crypto-Portfolio-Tracker/app/static/js/chart.js)) para detectar dinámicamente el idioma activo (galleta `lang=es` o atributo HTML `lang="es"`) y traducir toasters, diálogos de confirmación, etiquetas y leyendas de las velas japonesas.
+
+#### 3. ⚠️ Eliminación de Advertencias de Deprecación (`datetime.utcnow()`)
+* **Problema Identificado**: Uso de la función desaconsejada `datetime.utcnow()` en los modelos `AlertLog`, `Transaction` y en la respuesta JSON del endpoint `/api/health`.
+* **Solución Implementada**: Migración a `datetime.now(timezone.utc)`, cumpliendo con los estándares modernos de Python 3.12+ y SQLAlchemy 2.0.
+
+---
+
+### 13.2 Estado Final de Verificación y Pruebas Automatizadas
+
+Se ejecutó la suite completa de pruebas obteniendo los siguientes resultados empíricos:
+
+* **Suite de Pruebas Unitarias e Integración (Pytest)**: **28 / 28 Pruebas Aprobadas (100% Exitosas)**.
+* **Pruebas de Selenium End-to-End (E2E)**: **4 / 4 Flujos Críticos Aprobados**.
+* **Estado del Endpoint de Salud (`/api/health`)**: HTTP 200 OK — Base de datos conectada.
+

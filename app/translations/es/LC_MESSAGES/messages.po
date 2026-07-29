@@ -190,3 +190,25 @@ msgstr "Modo Oscuro"
 
 msgid "Light Mode"
 msgstr "Modo Claro"
+
+msgid "Date / Time"
+msgstr "Fecha / Hora"
+
+msgid "No alerts triggered yet"
+msgstr "No se han disparado alertas aún"
+
+msgid "Daily Portfolio Email"
+msgstr "Correo Diario del Portafolio"
+
+msgid "24h Change"
+msgstr "Cambio 24h"
+
+msgid "24h High"
+msgstr "Máximo 24h"
+
+msgid "24h Low"
+msgstr "Mínimo 24h"
+
+msgid "Removed"
+msgstr "Eliminado"
+

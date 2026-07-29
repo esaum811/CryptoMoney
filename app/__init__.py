@@ -1,7 +1,7 @@
 """Fábrica de aplicaciones Flask (Application Factory Pattern)."""
 from flask import Flask, jsonify, session, request, has_request_context
 from sqlalchemy import text
-from datetime import datetime
+from datetime import datetime, timezone
 from config import Config
 from app.extensions import db, login_manager, migrate, babel
 
@@ -125,7 +125,7 @@ def create_app(config_class=Config):
         """Verifica la salud del servidor y la conexión a la base de datos."""
         health = {
             'status': 'ok',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'database': 'connected',
             'version': '2.0.0'
         }

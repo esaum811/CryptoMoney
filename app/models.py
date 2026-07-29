@@ -1,6 +1,6 @@
 """Modelos de la base de datos (SQLAlchemy ORM)."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db
@@ -58,7 +58,7 @@ class AlertLog(db.Model):
     alert_type = db.Column(db.String(10))
     trigger_price = db.Column(db.Float)
     limit_value = db.Column(db.Float)
-    triggered_at = db.Column(db.DateTime, default=datetime.utcnow)
+    triggered_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     email_sent = db.Column(db.Boolean, default=False)
     user = db.relationship('User', backref='alert_logs')
 
@@ -72,6 +72,6 @@ class Transaction(db.Model):
     type = db.Column(db.String(4), nullable=False)  # 'BUY' o 'SELL'
     quantity = db.Column(db.Float, nullable=False)
     price_at_transaction = db.Column(db.Float, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     user = db.relationship('User', backref='transactions')
 

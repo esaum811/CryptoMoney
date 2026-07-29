@@ -1,3 +1,7 @@
+function getIsEs() {
+    return document.cookie.includes('lang=es') || (document.documentElement.lang === 'es');
+}
+
 function showToast(title, message, type = 'info') {
     const toastEl = document.getElementById('liveToast');
     if (!toastEl) return;
@@ -24,6 +28,7 @@ function showToast(title, message, type = 'info') {
 }
 
 function openAlertModal(cryptoName) {
+    const isEs = getIsEs();
     document.getElementById('alertSymbol').value = cryptoName;
     document.getElementById('alertSymbolDisplay').innerText = cryptoName;
     
@@ -36,21 +41,23 @@ function openAlertModal(cryptoName) {
         })
         .catch(err => {
             console.error(err);
-            showToast('Error', 'Failed to fetch current price', 'danger');
+            const errTitle = isEs ? 'Error' : 'Error';
+            const errMsg = isEs ? 'Error al obtener el precio actual' : 'Failed to fetch current price';
+            showToast(errTitle, errMsg, 'danger');
         });
 }
 
 function submitAlert() {
+    const isEs = getIsEs();
     const symbol = document.getElementById('alertSymbol').value;
     const alertType = document.getElementById('alertType').value;
     const targetPrice = parseFloat(document.getElementById('alertPrice').value);
 
     if (!targetPrice || targetPrice <= 0) {
-        showToast('Error', 'Please enter a valid price', 'danger');
+        showToast(isEs ? 'Error' : 'Error', isEs ? 'Por favor ingrese un precio válido' : 'Please enter a valid price', 'danger');
         return;
     }
 
-    // Map the modal's single-price design to the backend's lower/upper limit model
     let lower = 0;
     let upper = 999999999;
     if (alertType === 'UPPER') {
@@ -70,27 +77,29 @@ function submitAlert() {
     })
     .then(res => res.json())
     .then(data => {
-        showToast('Success', data.message || 'Alert created', 'success');
+        showToast(isEs ? 'Éxito' : 'Success', data.message || (isEs ? 'Alerta creada' : 'Alert created'), 'success');
         const modalEl = document.getElementById('alertModal');
         const modal = bootstrap.Modal.getInstance(modalEl);
         if (modal) modal.hide();
-        // Clear the input
         document.getElementById('alertPrice').value = '';
     })
     .catch(err => {
         console.error(err);
-        showToast('Error', 'Server error', 'danger');
+        showToast(isEs ? 'Error' : 'Error', isEs ? 'Error del servidor' : 'Server error', 'danger');
     });
 }
 
 async function checkForAlerts() {
+    const isEs = getIsEs();
     try {
         const response = await fetch('/check_alerts');
         if (response.ok) {
             const data = await response.json();
             if (data.triggered_alerts && data.triggered_alerts.length > 0) {
                 data.triggered_alerts.forEach(symbol => {
-                    showToast('Alert Triggered!', `${symbol} crossed a price limit!`, 'warning');
+                    const title = isEs ? '¡Alerta Disparada!' : 'Alert Triggered!';
+                    const msg = isEs ? `¡${symbol} superó un límite de precio!` : `${symbol} crossed a price limit!`;
+                    showToast(title, msg, 'warning');
                 });
             }
         }
@@ -100,7 +109,9 @@ async function checkForAlerts() {
 }
 
 function removeFromWatchlist(cryptoName) {
-    if (confirm(`Remove ${cryptoName} from watchlist?`)) {
+    const isEs = getIsEs();
+    const confirmMsg = isEs ? `¿Eliminar ${cryptoName} de la lista de seguimiento?` : `Remove ${cryptoName} from watchlist?`;
+    if (confirm(confirmMsg)) {
         fetch(`/remove_from_watchlist/${cryptoName}`, {
             method: 'POST'
         })
@@ -108,15 +119,17 @@ function removeFromWatchlist(cryptoName) {
         .then(data => {
             const item = document.getElementById(`watchlist-item-${cryptoName}`);
             if (item) item.remove();
-            showToast('Removed', data.message || `${cryptoName} removed`, 'success');
+            const title = isEs ? 'Eliminado' : 'Removed';
+            const msg = data.message || (isEs ? `${cryptoName} eliminado` : `${cryptoName} removed`);
+            showToast(title, msg, 'success');
         })
         .catch(err => console.error(err));
     }
 }
 
 function addToWatchlist() {
+    const isEs = getIsEs();
     const select = document.getElementById('crypto-select');
-    const searchInput = document.getElementById('crypto-search');
     let symbol = select ? select.value : '';
 
     if (!symbol && select && select.options.length > 1) {
@@ -130,11 +143,10 @@ function addToWatchlist() {
     }
 
     if (!symbol) {
-        showToast('Info', 'Please select a cryptocurrency', 'warning');
+        showToast(isEs ? 'Información' : 'Info', isEs ? 'Por favor seleccione una criptomoneda' : 'Please select a cryptocurrency', 'warning');
         return;
     }
 
-    
     const formData = new FormData();
     formData.append('crypto', symbol);
     
@@ -156,6 +168,7 @@ function addToWatchlist() {
 }
 
 function togglePortfolioEmail() {
+    const isEs = getIsEs();
     const isChecked = document.getElementById('portfolioEmailToggle').checked;
     fetch('/sign_up_for_portfolio_email', {
         method: 'POST',
@@ -164,7 +177,7 @@ function togglePortfolioEmail() {
     })
     .then(res => res.json())
     .then(data => {
-        showToast('Preferences', data.message || 'Updated', 'success');
+        showToast(isEs ? 'Preferencias' : 'Preferences', data.message || (isEs ? 'Actualizado' : 'Updated'), 'success');
     })
     .catch(err => console.error(err));
 }
@@ -183,3 +196,4 @@ function getUserEmailPreference() {
     })
     .catch(err => console.error(err));
 }
+

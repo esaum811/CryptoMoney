@@ -2,6 +2,8 @@
 
 **Proyecto**: Crypto Portfolio Tracker  
 **Fase**: 6 — Entrega, Despliegue de Valor en la Nube (Railway), Monitoreo y Salubridad  
+**URL de Producción (Railway)**: [cryptomoney-production.up.railway.app](https://cryptomoney-production.up.railway.app)  
+**Endpoint Health Check**: [cryptomoney-production.up.railway.app/api/health](https://cryptomoney-production.up.railway.app/api/health)  
 **Ubicación del repositorio**: `ProyectoExamen/Crypto-Portfolio-Tracker`  
 
 ---

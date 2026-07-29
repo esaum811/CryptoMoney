@@ -190,3 +190,25 @@ msgstr ""
 
 msgid "Light Mode"
 msgstr ""
+
+msgid "Date / Time"
+msgstr ""
+
+msgid "No alerts triggered yet"
+msgstr ""
+
+msgid "Daily Portfolio Email"
+msgstr ""
+
+msgid "24h Change"
+msgstr ""
+
+msgid "24h High"
+msgstr ""
+
+msgid "24h Low"
+msgstr ""
+
+msgid "Removed"
+msgstr ""
+
