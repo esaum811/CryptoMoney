@@ -30,4 +30,4 @@ COPY . .
 EXPOSE 5000
 
 # Comando de inicio usando el servidor WSGI de producción (Gunicorn) escuchando en la variable de entorno PORT (Railway)
-CMD ["sh", "-c", "gunicorn app:app --bind 0.0.0.0:${PORT:-5000}"]
+CMD ["sh", "-c", "gunicorn run:app --bind 0.0.0.0:${PORT:-5000}"]
