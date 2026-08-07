@@ -59,5 +59,8 @@ def set_language(lang):
     """Cambia la preferencia de idioma del usuario (en / es)."""
     if lang in ['en', 'es']:
         session['lang'] = lang
-    return redirect(request.referrer or url_for('auth.login'))
+    response = redirect(request.referrer or url_for('auth.login'))
+    if lang in ['en', 'es']:
+        response.set_cookie('lang', lang, max_age=30*24*60*60)
+    return response
 

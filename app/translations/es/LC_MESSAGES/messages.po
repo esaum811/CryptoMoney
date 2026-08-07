@@ -212,3 +212,36 @@ msgstr "Mínimo 24h"
 msgid "Removed"
 msgstr "Eliminado"
 
+msgid "P&L"
+msgstr "Gan/Perd"
+
+msgid "P&L %"
+msgstr "% Gan/Perd"
+
+msgid "Login"
+msgstr "Iniciar Sesión"
+
+msgid "Welcome Back"
+msgstr "¡Bienvenido de nuevo!"
+
+msgid "Login to manage your crypto portfolio"
+msgstr "Inicia sesión para gestionar tu portafolio de criptomonedas"
+
+msgid "Don't have an account?"
+msgstr "¿No tienes una cuenta?"
+
+msgid "Sign Up"
+msgstr "Registrarse"
+
+msgid "Create Account"
+msgstr "Crear Cuenta"
+
+msgid "Start tracking your crypto portfolio today"
+msgstr "Empieza a rastrear tu portafolio de criptomonedas hoy"
+
+msgid "Email Address"
+msgstr "Correo Electrónico"
+
+msgid "Already have an account?"
+msgstr "¿Ya tienes una cuenta?"
+

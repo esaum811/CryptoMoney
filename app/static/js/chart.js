@@ -93,7 +93,49 @@ function drawChart(data, title) {
         }
     };
 
-    Plotly.newPlot('mainChart', [trace], layout, {responsive: true});
+    const config = {
+        responsive: true,
+        locale: isEs ? 'es' : 'en'
+    };
+
+    Plotly.newPlot('mainChart', [trace], layout, config);
+}
+
+// Register Spanish locale for Plotly tooltips (e.g. "Lasso Select" -> "Selección de lazo")
+if (typeof Plotly !== 'undefined' && Plotly.register) {
+    try {
+        Plotly.register({
+            moduleType: 'locale',
+            name: 'es',
+            dictionary: {
+                'Autoscale': 'Escala automática',
+                'Box Select': 'Selección en caja',
+                'Download plot as a png': 'Descargar gráfico como PNG',
+                'Edit in Chart Studio': 'Editar en Chart Studio',
+                'Lasso Select': 'Selección de lazo',
+                'Pan': 'Desplazar',
+                'Reset axes': 'Restablecer ejes',
+                'Toggle Spike Lines': 'Alternar líneas de guía',
+                'Zoom': 'Zoom',
+                'Zoom in': 'Acercar',
+                'Zoom out': 'Alejar',
+                'Produce a WebGL image': 'Generar imagen WebGL',
+                'Reset views': 'Restablecer vistas',
+                'Snapshot succeeded': 'Captura exitosa',
+                'Snapshot failed': 'Error en la captura',
+                'Taking snapshot': 'Tomando captura',
+                'Hover': 'Superponer'
+            },
+            format: {
+                days: ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'],
+                shortDays: ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'],
+                months: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+                shortMonths: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+            }
+        });
+    } catch (e) {
+        console.warn('Plotly locale registration warning:', e);
+    }
 }
 
 function updateChartTheme(theme) {

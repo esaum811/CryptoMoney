@@ -68,9 +68,9 @@
 
     <div class="d-flex wrapper">
         <!-- Sidebar -->
+        {% if current_user and current_user.is_authenticated %}
         <aside class="sidebar bg-secondary-custom shadow-sm" id="sidebar">
             <div class="sidebar-sticky pt-3 h-100 d-flex flex-column">
-                {% if current_user and current_user.is_authenticated %}
                 <!-- Navigation Links -->
                 <ul class="nav flex-column mb-auto px-3 gap-2">
                     <li class="nav-item">
@@ -225,9 +225,9 @@
                         <label class="form-check-label small text-muted" for="portfolioEmailToggle">{{ _('Daily Portfolio Email') }}</label>
                     </div>
                 </div>
-                {% endif %}
             </div>
         </aside>
+        {% endif %}
 
         <!-- Main Content -->
         <main class="main-content flex-grow-1 p-4 pb-5 overflow-auto">

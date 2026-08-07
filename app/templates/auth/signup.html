@@ -1,59 +1,216 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row justify-content-center align-items-center min-vh-100 py-5" style="margin-top: -80px;">
-    <div class="col-12 col-md-8 col-lg-5">
-        <div class="card glass-card border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="card-header bg-transparent border-0 text-center pt-5 pb-2">
-                <div class="display-1 mb-3 text-primary">
-                    <i class="bi bi-person-plus"></i>
-                </div>
-                <h2 class="fw-bold">{{ _('Create Account') }}</h2>
-                <p class="text-muted">{{ _('Start tracking your crypto portfolio today') }}</p>
+<style>
+    /* Scoped exclusively to the signup page */
+    .signup-wrapper {
+        min-height: calc(100vh - 120px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem 1rem;
+    }
+
+    .signup-card {
+        max-width: 480px;
+        width: 100%;
+        border-radius: 1.25rem;
+        padding: 2.25rem 2rem;
+        transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .signup-header-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        transition: color 0.3s ease;
+    }
+
+    .signup-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        margin-bottom: 0.25rem;
+        transition: color 0.3s ease;
+    }
+
+    .signup-subtitle {
+        font-size: 0.875rem;
+        margin-bottom: 1.5rem;
+        transition: color 0.3s ease;
+    }
+
+    .signup-input-group {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+
+    .signup-input-group label {
+        display: block;
+        font-weight: 600;
+        font-size: 0.825rem;
+        margin-bottom: 0.35rem;
+        transition: color 0.3s ease;
+    }
+
+    .signup-input-field {
+        border-radius: 0.65rem !important;
+        padding: 0.6rem 0.9rem !important;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .btn-signup-action {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        border: none;
+        color: #ffffff;
+        font-weight: 700;
+        padding: 0.75rem 1.25rem;
+        border-radius: 0.65rem;
+        font-size: 0.95rem;
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);
+        transition: all 0.2s ease;
+        margin-top: 0.5rem;
+    }
+
+    .btn-signup-action:hover {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+        transform: translateY(-1px);
+        color: #ffffff;
+    }
+
+    .login-prompt-signup {
+        font-size: 0.875rem;
+        margin-top: 1.25rem;
+        transition: color 0.3s ease;
+    }
+
+    .login-link-signup {
+        font-weight: 700;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .login-link-signup:hover {
+        text-decoration: underline !important;
+    }
+
+    /* ── Dark Mode Styles (Default) ── */
+    :root, [data-bs-theme="dark"] {
+        .signup-card {
+            background: rgba(22, 27, 38, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1.5px solid rgba(59, 130, 246, 0.35) !important;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(41, 121, 255, 0.15);
+        }
+
+        .signup-header-icon { color: #3b82f6 !important; }
+        .signup-title { color: #ffffff !important; }
+        .signup-subtitle { color: #94a3b8 !important; }
+        .signup-input-group label { color: #e2e8f0 !important; }
+
+        .signup-input-field {
+            background-color: rgba(15, 23, 42, 0.85) !important;
+            border: 1.5px solid rgba(59, 130, 246, 0.4) !important;
+            color: #ffffff !important;
+        }
+
+        .signup-input-field:focus {
+            background-color: rgba(15, 23, 42, 1) !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.3) !important;
+            color: #ffffff !important;
+        }
+
+        .login-prompt-signup { color: #94a3b8 !important; }
+        .login-link-signup { color: #60a5fa !important; }
+        .login-link-signup:hover { color: #93c5fd !important; }
+    }
+
+    /* ── Light Mode Styles ── */
+    [data-bs-theme="light"] {
+        .signup-card {
+            background: #ffffff !important;
+            border: 1.5px solid #e2e8f0 !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .signup-header-icon { color: #2563eb !important; }
+        .signup-title { color: #1e2022 !important; }
+        .signup-subtitle { color: #6c757d !important; }
+        .signup-input-group label { color: #334155 !important; }
+
+        .signup-input-field {
+            background-color: #f8fafc !important;
+            border: 1.5px solid #cbd5e1 !important;
+            color: #1e2022 !important;
+        }
+
+        .signup-input-field:focus {
+            background-color: #ffffff !important;
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.2) !important;
+            color: #1e2022 !important;
+        }
+
+        .login-prompt-signup { color: #64748b !important; }
+        .login-link-signup { color: #2563eb !important; }
+        .login-link-signup:hover { color: #1d4ed8 !important; }
+    }
+</style>
+
+<div class="signup-wrapper">
+    <div class="signup-card">
+        <div class="text-center">
+            <div class="signup-header-icon">
+                <i class="bi bi-person-plus-fill"></i>
             </div>
-            <div class="card-body px-5 pb-5 pt-3">
-                <form method="POST" action="{{ url_for('auth.signup') }}">
-                    {{ form.hidden_tag() if form else '' }}
+            <h2 class="signup-title">{{ _('Create Account') }}</h2>
+            <p class="signup-subtitle">{{ _('Start tracking your crypto portfolio today') }}</p>
+        </div>
 
-                    {% for field in form.errors %}
-                        {% for error in form.errors[field] %}
-                        <div class="alert alert-danger alert-dismissible fade show py-2" role="alert">
-                            {{ error }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                        {% endfor %}
-                    {% endfor %}
-                    
-                    <div class="mb-4 form-floating">
-                        <input type="text" class="form-control bg-secondary-custom border-secondary text-primary" id="username" name="username" placeholder="{{ _('Username') }}" required>
-                        <label for="username" class="text-muted">{{ _('Username') }}</label>
-                    </div>
+        <form method="POST" action="{{ url_for('auth.signup') }}">
+            {{ form.hidden_tag() if form else '' }}
 
-                    <div class="mb-4 form-floating">
-                        <input type="email" class="form-control bg-secondary-custom border-secondary text-primary" id="email" name="email" placeholder="{{ _('Email Address') }}" required>
-                        <label for="email" class="text-muted">{{ _('Email Address') }}</label>
-                    </div>
-                    
-                    <div class="mb-4 form-floating">
-                        <input type="password" class="form-control bg-secondary-custom border-secondary text-primary" id="password" name="password" placeholder="{{ _('Password') }}" required>
-                        <label for="password" class="text-muted">{{ _('Password') }}</label>
-                    </div>
-
-                    <div class="mb-4 form-floating">
-                        <input type="password" class="form-control bg-secondary-custom border-secondary text-primary" id="password2" name="password2" placeholder="{{ _('Repeat Password') }}" required>
-                        <label for="password2" class="text-muted">{{ _('Repeat Password') }}</label>
-                    </div>
-
-                    <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-semibold">{{ _('Sign Up') }}</button>
-                    </div>
-                </form>
-                
-                <div class="text-center mt-4">
-                    <span class="text-muted">{{ _('Already have an account?') }}</span>
-                    <a href="{{ url_for('auth.login') }}" class="text-decoration-none fw-semibold ms-1">{{ _('Login') }}</a>
+            {% for field in form.errors %}
+                {% for error in form.errors[field] %}
+                <div class="alert alert-danger alert-dismissible fade show py-2 small mb-3" role="alert">
+                    {{ error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
+                {% endfor %}
+            {% endfor %}
+            
+            <div class="signup-input-group">
+                <label for="username">{{ _('Username') }}</label>
+                <input type="text" class="form-control signup-input-field" id="username" name="username" placeholder="{{ _('Username') }}" required>
             </div>
+
+            <div class="signup-input-group">
+                <label for="email">{{ _('Email Address') }}</label>
+                <input type="email" class="form-control signup-input-field" id="email" name="email" placeholder="{{ _('Email Address') }}" required>
+            </div>
+            
+            <div class="signup-input-group">
+                <label for="password">{{ _('Password') }}</label>
+                <input type="password" class="form-control signup-input-field" id="password" name="password" placeholder="{{ _('Password') }}" required>
+            </div>
+
+            <div class="signup-input-group">
+                <label for="password2">{{ _('Repeat Password') }}</label>
+                <input type="password" class="form-control signup-input-field" id="password2" name="password2" placeholder="{{ _('Repeat Password') }}" required>
+            </div>
+
+            <div class="d-grid mt-3">
+                <button type="submit" class="btn btn-signup-action">{{ _('Sign Up') }}</button>
+            </div>
+        </form>
+        
+        <div class="login-prompt-signup text-center">
+            <span>{{ _('Already have an account?') }}</span>
+            <a href="{{ url_for('auth.login') }}" class="login-link-signup ms-1">{{ _('Login') }}</a>
         </div>
     </div>
 </div>

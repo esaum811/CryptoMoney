@@ -3,12 +3,12 @@
     <div id="liveToast" class="toast glass-card border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="toast-header bg-transparent border-bottom border-secondary text-primary">
             <i id="toastIcon" class="bi me-2"></i>
-            <strong class="me-auto" id="toastTitle">Notification</strong>
-            <small class="text-muted" id="toastTime">Just now</small>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            <strong class="me-auto" id="toastTitle">{{ _('Notification') }}</strong>
+            <small class="text-muted" id="toastTime">{{ _('Just now') }}</small>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="{{ _('Close') }}"></button>
         </div>
         <div class="toast-body text-primary" id="toastBody">
-            Message goes here.
+            {{ _('Message goes here.') }}
         </div>
     </div>
 </div>

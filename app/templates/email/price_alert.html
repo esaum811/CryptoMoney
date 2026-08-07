@@ -63,22 +63,22 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>CryptoTracker Price Alert</h1>
+            <h1>{{ _('CryptoTracker Price Alert') }}</h1>
         </div>
         <div class="content">
-            <p>Your price alert has been triggered!</p>
+            <p>{{ _('Your price alert has been triggered!') }}</p>
             <div class="symbol">{{ symbol }}</div>
             <div class="price">${{ "{:,.2f}".format(price) }}</div>
             <div class="change {{ 'up' if percentage_change >= 0 else 'down' }}">
                 {{ '+' if percentage_change >= 0 else '' }}{{ "{:.2f}".format(percentage_change) }}%
             </div>
             <p style="margin-top: 30px; color: #6c757d;">
-                Login to your dashboard to review your portfolio and manage alerts.
+                {{ _('Login to your dashboard to review your portfolio and manage alerts.') }}
             </p>
         </div>
         <div class="footer">
-            &copy; 2026 CryptoTracker. All rights reserved.<br>
-            You are receiving this because you configured a price alert on your account.
+            &copy; 2026 CryptoTracker. {{ _('All rights reserved.') }}<br>
+            {{ _('You are receiving this because you configured a price alert on your account.') }}
         </div>
     </div>
 </body>
