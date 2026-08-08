@@ -16,12 +16,17 @@ def login():
         return redirect(url_for('main.index'))
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
+        user = User.query.filter(
+            (User.username == form.username.data) | (User.email == form.username.data)
+        ).first()
         if user is None or not user.check_password(form.password.data):
             flash(_('Invalid username or password'), 'danger')
             return redirect(url_for('auth.login'))
         login_user(user)
-        return redirect(url_for('main.index'))
+        next_page = request.args.get('next')
+        if not next_page or not next_page.startswith('/'):
+            next_page = url_for('main.index')
+        return redirect(next_page)
     return render_template('auth/login.html', form=form)
 
 
@@ -59,7 +64,10 @@ def set_language(lang):
     """Cambia la preferencia de idioma del usuario (en / es)."""
     if lang in ['en', 'es']:
         session['lang'] = lang
-    response = redirect(request.referrer or url_for('auth.login'))
+    referrer = request.referrer
+    if not referrer or '/set_language' in referrer:
+        referrer = url_for('main.index') if current_user.is_authenticated else url_for('auth.login')
+    response = redirect(referrer)
     if lang in ['en', 'es']:
         response.set_cookie('lang', lang, max_age=30*24*60*60)
     return response

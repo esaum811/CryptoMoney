@@ -104,7 +104,7 @@
                                id="crypto-search" placeholder="{{ _('Search cryptocurrency...') }}" 
                                oninput="filterCryptoSelect()">
                         <div class="d-flex gap-2">
-                            <select class="form-select form-select-sm bg-secondary-custom border-secondary text-primary" id="crypto-select" name="crypto">
+                            <select class="form-select form-select-sm bg-secondary-custom border-secondary text-primary" id="crypto-select" name="crypto" onchange="if(typeof updateChartWithCrypto === 'function' && this.value) { updateChartWithCrypto(this.value); updateSymbolInfo(this.value); }">
                                 <option value="" disabled selected>{{ _('Select Crypto') }}</option>
                                 {% for value, label in watchlist_form.crypto.choices %}
                                 <option value="{{ value }}">{{ label }}</option>
@@ -205,7 +205,7 @@
                         {% if watchlist %}
                             {% for item in watchlist %}
                             <li class="list-group-item bg-transparent px-0 d-flex justify-content-between align-items-center border-bottom border-secondary" id="watchlist-item-{{ item.crypto_name }}">
-                                <span class="fw-medium">{{ item.crypto_name }}</span>
+                                <span class="fw-medium text-primary-hover" style="cursor: pointer;" onclick="if(typeof updateChartWithCrypto === 'function') { updateChartWithCrypto('{{ item.crypto_name }}'); updateSymbolInfo('{{ item.crypto_name }}'); }" title="{{ _('Click to view chart') }}"><i class="bi bi-graph-up me-1 text-primary"></i>{{ item.crypto_name }}</span>
                                 <div class="btn-group btn-group-sm">
                                     <button class="btn btn-outline-warning btn-icon" onclick="openAlertModal('{{ item.crypto_name }}')" title="{{ _('Set Alert') }}"><i class="bi bi-clock"></i></button>
                                     <button class="btn btn-outline-danger btn-icon" onclick="removeFromWatchlist('{{ item.crypto_name }}')" title="{{ _('Remove') }}"><i class="bi bi-dash-lg"></i></button>
